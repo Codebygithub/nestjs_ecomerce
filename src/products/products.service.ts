@@ -138,6 +138,34 @@ export class ProductsService {
       await this.productRepository.save(product)
     }
   } 
+
+  async getRecommededProduct(productId:number): Promise<ProductEntity[]>{
+    const products = await this.productRepository.find({
+      where:{id:productId},
+      relations:{reviews:true}
+    })
+    if(!products) throw new NotFoundException('PRODUCT NOT FOUND')
+
+    const recomendedProduct =  products.sort((a,b)=>{
+      const avgRatingA = this.calculateAverageRating(a.reviews)
+      const avgRatingB = this.calculateAverageRating(b.reviews)
+      return avgRatingA - avgRatingB
+
+    })
+    return recomendedProduct
+
+    
+    
+
+  }
+  private calculateAverageRating(reviews: any[]): number {
+    if (!reviews || reviews.length === 0) {
+      return 0;
+    }
+
+    const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return totalRating / reviews.length;
+  }
   async findOne(id: number):Promise<ProductEntity> {
     const product = await this.productRepository.findOne({
       where:{id},
