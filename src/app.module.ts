@@ -10,12 +10,12 @@ import { OrderModule } from './order/order.module';
 import { PassportModule } from '@nestjs/passport';
 import { GiaohangnhanhModule } from './giaohangnhanh/giaohangnhanh.module';
 import { ChatModule } from './chat/chat.module';
-import { EmailModule } from './email/email.module';
 import { MyLoggerModule } from './my-logger/my-logger.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bull';
 import { CartModule } from './cart/cart.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot(dataSourceOptions), 
