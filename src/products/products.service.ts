@@ -11,6 +11,7 @@ import { UserService } from 'src/user/user.service';
 import { OrderStatus } from 'src/order/enum/order-status.enum';
 import dataSource from 'db/data_source';
 import { OrderService } from 'src/order/order.service';
+import { ReviewEntity } from 'src/review/entities/review.entity';
 
 @Injectable()
 export class ProductsService {
@@ -158,12 +159,12 @@ export class ProductsService {
     
 
   }
-  private calculateAverageRating(reviews: any[]): number {
+  private calculateAverageRating(reviews: ReviewEntity[]): number {
     if (!reviews || reviews.length === 0) {
       return 0;
     }
 
-    const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
+    const totalRating = reviews.reduce((acc, review) => acc + review.ratings, 0);
     return totalRating / reviews.length;
   }
   async findOne(id: number):Promise<ProductEntity> {

@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
-import { CacheModule, CacheModuleOptions,  } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheModule, CacheModuleOptions,  } from '@nestjs/cache-manager';
 import redisStore from "cache-manager-redis-store";
 import { GoogleStrategy } from './google.strategy';
 import { PassportModule } from '@nestjs/passport';
@@ -30,7 +30,8 @@ import { BullModule } from '@nestjs/bull';
     provide:'AUTH_SERVICE',
     useClass:UserService
   },GoogleStrategy,
-  SesionSerialize
+  SesionSerialize,
+  CacheInterceptor
   
 ],
   exports:[UserService]

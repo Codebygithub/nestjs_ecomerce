@@ -26,6 +26,12 @@ export class UserEntity {
     @Column({ nullable: true, default: null })
     avatar: string;
 
+    @Column({nullable:false , default:false})
+    isActive: boolean ;
+
+    @Column({nullable:true,default:''})
+    introduction:string
+
     @CreateDateColumn()
     createdAt:Timestamp;
     @UpdateDateColumn()

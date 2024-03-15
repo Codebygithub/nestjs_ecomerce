@@ -7,11 +7,14 @@ import { ShippingEntity } from './entities/shipping.entity';
 import { OrderProductsEntity } from './entities/order-products.entity';
 import { ProductsModule } from 'src/products/products.module';
 import { UserModule } from 'src/user/user.module';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Module({
   imports:[TypeOrmModule.forFeature([OrderEntity,ShippingEntity,OrderProductsEntity]),forwardRef(()=>ProductsModule),UserModule],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderService,
+    CacheInterceptor
+  ],
   exports:[OrderService]
 })
 export class OrderModule {}

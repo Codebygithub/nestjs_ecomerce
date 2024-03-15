@@ -18,6 +18,7 @@ import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CartProcessor } from './cart.processor';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Module({
   imports:[TypeOrmModule.forFeature([CartEntity , ProductEntity , UserEntity,CategoryEntity,OrderEntity,OrderProductsEntity]),
@@ -36,7 +37,10 @@ import { CartProcessor } from './cart.processor';
 
   ],
   controllers: [CartController],
-  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,CartProcessor],
+  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,CartProcessor,
+    CacheInterceptor
+  
+  ],
   
 })
 export class CartModule {}

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReviewEntity } from './entities/review.entity';
 import { ProductsModule } from 'src/products/products.module';
 import { redisStore } from 'cache-manager-redis-store';
-import { CACHE_MODULE_OPTIONS, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
+import { CACHE_MODULE_OPTIONS, CacheInterceptor, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
 import { UserModule } from 'src/user/user.module';
 
 
@@ -19,6 +19,9 @@ import { UserModule } from 'src/user/user.module';
     port: 6379,
   })],
   controllers: [ReviewController],
-  providers: [ReviewService],
+  providers: [ReviewService,
+    CacheInterceptor
+  
+  ],
 })
 export class ReviewModule {}

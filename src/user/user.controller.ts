@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, Query, UseInterceptors, UseGuards, UploadedFile, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, Query, UseInterceptors, UseGuards, UploadedFile, Req, BadRequestException, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { signupDto } from './dto/user-signup.dto';
@@ -18,6 +18,7 @@ import { VerifyDto } from './dto/VerifyDto-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utility/helper/configAvatar';
 import { extname } from 'path';
+import { get } from 'http';
 
 
 @Controller('user')
@@ -156,6 +157,22 @@ export class UserController {
     const isValidOtp = await this.userService.verifyOTP(email,otp)
     if(!isValidOtp) throw new BadRequestException('Invalid OTP')
     return isValidOtp
+  }
+
+  @Get(':name/isActive')
+  async isActive(@Param('name') name:string){
+    const user:UserEntity = await this.userService.findByUsername(name)
+    if(!user) throw new NotFoundException('USER NOT FOUND')
+    return {active : user.isActive};
+
+  }
+
+  @Get(':name')
+  async isIntroYourSelf(@Param('name') name:string){
+    const user:UserEntity = await this.userService.findByUsername(name)
+    if(!user) throw new NotFoundException('USER NOT FOUND')
+    return user.introduction;
+
   }
 
 

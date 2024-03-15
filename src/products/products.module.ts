@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductEntity } from './entities/product.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { redisStore } from 'cache-manager-redis-store';
-import { CACHE_MODULE_OPTIONS, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
+import { CACHE_MODULE_OPTIONS, CacheInterceptor, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
 import { UserModule } from 'src/user/user.module';
 import { OrderModule } from 'src/order/order.module';
 
@@ -23,7 +23,9 @@ import { OrderModule } from 'src/order/order.module';
   
   
   controllers: [ProductsController],
-  providers: [ProductsService],
+  providers: [ProductsService,
+    CacheInterceptor
+  ],
   exports:[ProductsService]
 })
 export class ProductsModule {}
