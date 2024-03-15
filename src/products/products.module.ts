@@ -8,6 +8,7 @@ import { redisStore } from 'cache-manager-redis-store';
 import { CACHE_MODULE_OPTIONS, CacheInterceptor, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
 import { UserModule } from 'src/user/user.module';
 import { OrderModule } from 'src/order/order.module';
+import { RateLimitService } from 'src/utility/service/rate-limit.service';
 
 
 @Module({
@@ -24,7 +25,8 @@ import { OrderModule } from 'src/order/order.module';
   
   controllers: [ProductsController],
   providers: [ProductsService,
-    CacheInterceptor
+    CacheInterceptor,
+    RateLimitService
   ],
   exports:[ProductsService]
 })

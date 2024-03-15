@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, Query, Req, NotFoundException, Res, ForbiddenException, HttpStatus, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, Query, Req, NotFoundException, Res, ForbiddenException, HttpStatus, ParseIntPipe, BadRequestException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -15,10 +15,13 @@ import { Request, Response } from 'express';
 import { SerializeIncludes } from 'src/utility/interceptors/serialize.interceptors';
 import { productDto } from './dto/product.dto';
 import { Throttle } from '@nestjs/throttler';
+import { RateLimitService } from 'src/utility/service/rate-limit.service';
 
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService,
+              private readonly ratelimitService:RateLimitService
+    ) {}
 
   @Post('create-product')
   @Throttle({default:{ttl:10000,limit:5}})
@@ -34,8 +37,16 @@ export class ProductsController {
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @Throttle({default:{ttl:10000,limit:5}})
   @UseInterceptors(CacheInterceptor)
-  findAll(@Query() query:any):Promise<productDto> {
-    return this.productsService.findAll(query);
+  async findAll(@Query() query:any,@Req() req):Promise<productDto> {
+    const ipAddress = req.ip
+    const limit = +process.env.LIMIT
+    const ttl = +process.env.TTL
+    const underLimit = await this.ratelimitService.incrementAndCheckLimit(ipAddress,limit,ttl)
+    if(!underLimit) {
+      throw new BadRequestException('OVER REQUEST')
+    }
+    const res = await this.productsService.findAll(query);
+    return res
   }
 
   @Get(':id')
