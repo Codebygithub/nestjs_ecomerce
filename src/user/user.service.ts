@@ -86,6 +86,7 @@ export class UserService {
     if(!userExist) throw new BadRequestException('Bad Creaditial')
     const matchPassword = await compare(signinDto.password,userExist.password)
     if(!matchPassword) throw new BadRequestException('wrong password')
+    userExist.isActive = true;
     delete userExist.password
     return userExist
   }
