@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException, forwardRef } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
@@ -80,16 +80,22 @@ export class OrderService {
   }
 
   async cancelled(id:number,currentUser:UserEntity){
-    let found =await this.findOne(id);
-    if(!found) throw new NotFoundException('Order not found')
+    let order = await this.findOne(id)
+    if(!order) throw new NotFoundException('ORDER NOT FOUND')
 
-    if(found.status === OrderStatus.CENCELLED) return found;
+    if(order.status === OrderStatus.CENCELLED) return order
+    
+    if(currentUser.id !== order.updatedBy.id) {
+      throw new UnauthorizedException("You don't have permission to perform this action")
+    }
 
-    found.status = OrderStatus.CENCELLED
-    found.updatedBy = currentUser
-    found = await this.orderRepository.save(found)
-    await this.stockUpdate(found,OrderStatus.CENCELLED)
-    return found
+    order.status = OrderStatus.CENCELLED
+    order.updatedBy = currentUser
+
+
+    order = await this.orderRepository.save(order)
+    await this.stockUpdate(order,OrderStatus.CENCELLED)
+    return order
 
 
 

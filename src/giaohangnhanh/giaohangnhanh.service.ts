@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Body, Injectable, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CreateGiaohangnhanhDto } from './dto/create-giaohangnhanh.dto';
+import { cancelDto } from './dto/cancel-giaohangnhanh.dto';
+import { ProductsService } from 'src/products/products.service';
 @Injectable()
 export class GiaohangnhanhService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService,
+              private readonly productService:ProductsService
+    ) {}
 
-  async create(createGiaohangnhanhDto:CreateGiaohangnhanhDto): Promise<any> {
+  async create(createGiaohangnhanhDto:CreateGiaohangnhanhDto,id:number): Promise<any> {
+
+    const product = await this.productService.findOne(id)
+    if(!product) throw new NotFoundException('PRODUCT NOT FOUND')
     const data = {
       payment_type_id: createGiaohangnhanhDto.payment_type_id,
       note: createGiaohangnhanhDto.note,
@@ -97,6 +104,38 @@ export class GiaohangnhanhService {
       throw error;
       
     }
+  }
+
+  async cancel(cancelDto:cancelDto,id:number){
+    const product = await this.productService.findOne(id)
+    if(!product) throw new NotFoundException('PRODUCT NOT FOUND')
+
+    const data = {
+      order_codes:cancelDto.order_codes
+    }
+
+    try {
+      const url = 'https://dev-online-gateway.ghn.vn/shiip/public-api/v2/switch-status/cancel'
+      const response = await this.httpService.post(url,data,{
+        headers:{
+          token:'9229f01f-dab5-11ee-a6e6-e60958111f48',
+          'User-Agent': 'axios/1.6.7',
+          shop_id:'190974',
+          Accept: 'application/json, text/plain, */*',
+            'Content-Type': 'application/json',
+        }
+      }
+
+    ).toPromise()
+      
+    return response.data
+  
+    } catch (error) {
+      console.log(error)
+    }
+
+
+
   }
 
   async getDistrict(){

@@ -7,16 +7,17 @@ import { AuthorizeGuard } from 'src/utility/guard/authorization.guard';
 import { Roles } from 'src/utility/common/user-role.enum';
 import { AuthorizeRoles } from 'src/utility/decorators/authorize-role.decorator';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { cancelDto } from './dto/cancel-giaohangnhanh.dto';
 
 @Controller('giaohangnhanh')
 export class GiaohangnhanhController {
   constructor(private readonly giaohangnhanhService:GiaohangnhanhService ) {}
 
-  @Post('create-order')
+  @Post('create-order/:id')
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async createOrder(@Body() createGiaohangnhanhDto:CreateGiaohangnhanhDto): Promise<any> {
-    const res = await this.giaohangnhanhService.create(createGiaohangnhanhDto);
+  async createOrder(@Body() createGiaohangnhanhDto:CreateGiaohangnhanhDto,@Param('id') id:string): Promise<any> {
+    const res = await this.giaohangnhanhService.create(createGiaohangnhanhDto,+id);
     console.log('createGiaohangnhanhDto',createGiaohangnhanhDto)
     console.log('res',res)
     return await res
@@ -39,6 +40,15 @@ export class GiaohangnhanhController {
     const res = await this.giaohangnhanhService.getDistrict()
     console.log("res",res)
     return await res
+  }
+  
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @Post('cancelOrder/:id')
+  async cancel(@Body() CanncelDto:cancelDto,@Param('id')id:string)
+  {
+    const res = await this.giaohangnhanhService.cancel(CanncelDto,+id)
+    return res
   }
 
 }

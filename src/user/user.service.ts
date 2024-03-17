@@ -203,6 +203,6 @@ export class UserService {
   }
 
   async findByUsername(name: string): Promise<UserEntity> {
-    return this.userRepository.findOneBy({name});
+    return await this.userRepository.findOneBy({name});
   }
 }

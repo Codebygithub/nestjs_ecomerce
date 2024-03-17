@@ -5,9 +5,10 @@ import { HttpModule } from '@nestjs/axios';
 import { AxiosHeaders } from 'axios';
 import { redisStore } from 'cache-manager-redis-store';
 import { CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
+import { ProductsModule } from 'src/products/products.module';
 
 @Module({
-  imports:[HttpModule,AxiosHeaders,
+  imports:[HttpModule,AxiosHeaders,ProductsModule,
     CacheModule.register<CacheModuleOptions>({
       isGlobal:true,
       store: typeof(redisStore),

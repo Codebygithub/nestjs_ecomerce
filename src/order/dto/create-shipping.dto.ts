@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
-export class createShippingDto {
+export class CreateShippingDto {
     @IsString()
     @IsNotEmpty()
     phone:string;
@@ -27,6 +27,6 @@ export class createShippingDto {
 
     @IsString()
     @IsNotEmpty()
-    counttry:string;
+    country:string;
 
 }

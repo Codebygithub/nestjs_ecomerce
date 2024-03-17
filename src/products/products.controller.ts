@@ -97,7 +97,7 @@ export class ProductsController {
   @AuthorizeRoles(Roles.ADMIN)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @UseInterceptors(CacheInterceptor)
-  async increaseViewCount(@Param('id') productId: number,@CurrentUser() currentUser:UserEntity): Promise<void> {
+  async increaseViewCount(@Param('id') productId: number,@CurrentUser() currentUser:UserEntity): Promise<ProductEntity> {
     const res = await this.productsService.increaseViewCount(productId,currentUser);
     return res
   }

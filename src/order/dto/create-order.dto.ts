@@ -1,13 +1,13 @@
 import { Type } from "class-transformer"
-import { createShippingDto } from "./create-shipping.dto"
+import { CreateShippingDto } from "./create-shipping.dto"
 import { ValidateNested } from "class-validator"
 import { OrderProductDto } from "./order-product.dto";
 
 export class CreateOrderDto {
 
-    @Type(()=>createShippingDto)
+    @Type(()=>CreateShippingDto)
     @ValidateNested()
-    shippingAddress:createShippingDto;
+    shippingAddress:CreateShippingDto;
 
     @Type(()=>OrderProductDto)
     @ValidateNested()

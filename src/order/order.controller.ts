@@ -17,12 +17,14 @@ import { OrderStatus } from './enum/order-status.enum';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  @UseGuards(AuthenticationGuard)
   @Post()
-  @AuthorizeRoles(Roles.ADMIN)  
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async create(@Body() createOrderDto: CreateOrderDto,@CurrentUser() CurrentUser:UserEntity):Promise<OrderEntity> {
-    return await  this.orderService.create(createOrderDto,CurrentUser);
+  async create(@Body() createOrderDto:CreateOrderDto,@CurrentUser() currentUser:UserEntity)
+  {
+     return  await this.orderService.create(createOrderDto,currentUser)
+  
   }
+ 
 
   @Get()
   @AuthorizeRoles(Roles.ADMIN)  
@@ -35,7 +37,7 @@ export class OrderController {
   @AuthorizeRoles(Roles.ADMIN)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   async findOne(@Param('id') id: string):Promise<OrderEntity> {
-    return this.orderService.findOne(+id);
+    return await this.orderService.findOne(+id);
   }
 
   @Patch(':id')
@@ -73,37 +75,10 @@ export class OrderController {
   @Put('cancel/:id')
   @AuthorizeRoles(Roles.ADMIN)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async cancelled(@Param('id') id:string ,@Req() req:Request , @Res() res:Response){
-    const order = await this.orderService.findOne(+id)
-    if(!order ) throw new NotFoundException('order not found')
-    if(order?.status === OrderStatus.CENCELLED ) throw new BadRequestException("This order is already canceled")
-    const currentUser:UserEntity = req.currentUser
-
-    try {
-      if (!(await this.orderService.isUserOwner(order.updatedBy.id, currentUser.id))) {
-        throw new ForbiddenException('You are not the owner of this category');
-      }
+  async cancelled(@Param('id') id:string ,@CurrentUser() currentUser:UserEntity){
+    const res = await this.orderService.cancelled(+id,currentUser)
+    return res
     
-      const result = await this.orderService.cancelled(+id,currentUser)
-     
-      res.status(HttpStatus.OK).json({
-        message: 'Category removed successfully',
-        result,
-      })
-    } catch (error) {
-      console.error('Error:', error);
-    if (error instanceof ForbiddenException) {
-      res.status(HttpStatus.FORBIDDEN).json({
-        message: error.message,
-      });
-    } else {
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        message: 'An error occurred while removing the category',
-      });
-    
-  }
-      
-    }
 
   }
   @Delete(':id')

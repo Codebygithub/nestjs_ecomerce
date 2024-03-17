@@ -130,7 +130,7 @@ export class ProductsService {
 
   }
 
-  async increaseViewCount(productId:number,currentUser:UserEntity):Promise<void>{ 
+  async increaseViewCount(productId:number,currentUser:UserEntity):Promise<ProductEntity>{ 
     let product = await this.findOne(productId)
     if(!product) throw new NotFoundException('product not found')
     if(product) {
@@ -138,6 +138,7 @@ export class ProductsService {
       product.addedBy = currentUser
       await this.productRepository.save(product)
     }
+    return product
   } 
 
   async getRecommededProduct(productId:number): Promise<ProductEntity[]>{
