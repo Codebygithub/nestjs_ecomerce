@@ -103,6 +103,9 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @AuthorizeRoles(Roles.ADMIN)  
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @UseInterceptors(CacheInterceptor)
   remove(@Param('id') id: string , @CurrentUser() currentUser:UserEntity) {
     return this.productsService.remove(+id,currentUser);
   }

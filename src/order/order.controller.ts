@@ -81,10 +81,21 @@ export class OrderController {
     const res = await this.orderService.cancelled(+id,currentUser)
     return res
     
+    
 
   }
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.orderService.remove(+id);
+  }
+
+
+  @Get(':id/status')
+  @AuthorizeRoles(Roles.USER)  
+  @UseInterceptors(CacheInterceptor)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  async getOrderStatus(@Param('id') orderId:string): Promise<string>{
+    const res = await this.orderService.getOrderStatus(+orderId)
+    return res
   }
 }

@@ -2,6 +2,7 @@
 
 import { CartEntity } from 'src/cart/entities/cart.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { DiscountEntity } from 'src/discounts/entities/discount.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { ReviewEntity } from 'src/review/entities/review.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
@@ -50,6 +51,9 @@ export class ProductEntity {
 
   @OneToMany(() => CartEntity, cart => cart.product)
   cart: CartEntity[];
+
+  @OneToMany(() => DiscountEntity, discount => discount.product)
+  discounts: DiscountEntity[];
 
 
 

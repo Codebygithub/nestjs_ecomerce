@@ -78,7 +78,11 @@ export class OrderService {
     }) 
    
   }
-
+  async getOrderStatus(orderId:number): Promise<string>{
+    const order = await this.findOne(orderId)
+    if(!order) throw new NotFoundException('ORDER NOT FOUND')
+    return order.status
+  }
   async cancelled(id:number,currentUser:UserEntity){
     let order = await this.findOne(id)
     if(!order) throw new NotFoundException('ORDER NOT FOUND')
