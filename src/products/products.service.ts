@@ -225,7 +225,6 @@ export class ProductsService {
   async updateStock(id:number , stock:number , status:string)
   {
     let product = await this.findOne(id)
-    if(!product) throw new NotFoundException('product not found')
     if(status === OrderStatus.DELIVERED)
     {
       product.stock-=stock

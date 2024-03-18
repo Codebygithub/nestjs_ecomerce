@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm";
 import { OrderStatus } from "../enum/order-status.enum";
 import { UserEntity } from "src/user/entities/user.entity";
 import { ShippingEntity } from "./shipping.entity";
@@ -28,7 +28,7 @@ export class OrderEntity {
     @JoinColumn()
     shippingAddress:ShippingEntity;
 
-    @ManyToOne(()=>OrderProductsEntity , (op)=>op.order,{cascade:true})
+    @OneToMany(()=>OrderProductsEntity , (op)=>op.order,{cascade:true})
     products:OrderProductsEntity[];
 
     @ManyToOne(()=>UserEntity,(user)=>user.orders)

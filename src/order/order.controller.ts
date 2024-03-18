@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put, Req, Res, NotFoundException, ForbiddenException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put, Req, Res, NotFoundException, ForbiddenException, HttpStatus, BadRequestException, UseInterceptors } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -12,6 +12,7 @@ import { OrderEntity } from './entities/order.entity';
 import { updateOrderStatusDto } from './dto/update-status.dto';
 import { Response , Request } from 'express';
 import { OrderStatus } from './enum/order-status.enum';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('order')
 export class OrderController {
@@ -27,6 +28,7 @@ export class OrderController {
  
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   @AuthorizeRoles(Roles.ADMIN)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   async findAll():Promise<OrderEntity[]> {
@@ -48,7 +50,7 @@ export class OrderController {
     const currentUser: UserEntity = req.currentUser;
     if(!order) throw new NotFoundException('Order not found ')
     try {
-      if (!(await this.orderService.isUserOwner(order.updatedBy.id, currentUser.id))) {
+      if (!(await this.orderService.isUserOwner(order.user.id, currentUser.id))) {
         throw new ForbiddenException('You are not the owner of this order');
         }
         const result = await this.orderService.update(order.id,updateOrderStatusDto,currentUser);

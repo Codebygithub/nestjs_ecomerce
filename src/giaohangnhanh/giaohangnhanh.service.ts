@@ -3,10 +3,14 @@ import { HttpService } from '@nestjs/axios';
 import { CreateGiaohangnhanhDto } from './dto/create-giaohangnhanh.dto';
 import { cancelDto } from './dto/cancel-giaohangnhanh.dto';
 import { ProductsService } from 'src/products/products.service';
+import { OrderService } from 'src/order/order.service';
+import { OrderStatus } from 'src/order/enum/order-status.enum';
+import { UserEntity } from 'src/user/entities/user.entity';
 @Injectable()
 export class GiaohangnhanhService {
   constructor(private readonly httpService: HttpService,
-              private readonly productService:ProductsService
+              private readonly productService:ProductsService,
+              private readonly orderService:OrderService
     ) {}
 
   async create(createGiaohangnhanhDto:CreateGiaohangnhanhDto,id:number): Promise<any> {
@@ -106,7 +110,7 @@ export class GiaohangnhanhService {
     }
   }
 
-  async cancel(cancelDto:cancelDto,id:number){
+  async cancel(cancelDto:cancelDto,id:number,currentUser:UserEntity){
     const product = await this.productService.findOne(id)
     if(!product) throw new NotFoundException('PRODUCT NOT FOUND')
 
@@ -127,8 +131,16 @@ export class GiaohangnhanhService {
       }
 
     ).toPromise()
-      
-    return response.data
+      if(response.data.success) {
+        const order = await this.orderService.findOne(id)
+        if(!order) throw new NotFoundException('ORDER NOT FOUND')
+        const orderStock = await this.orderService.stockUpdate(cancelDto.orderId,OrderStatus.CENCELLED)
+        return response.data
+        
+      }
+      else{
+        throw new Error('Failed to cancel order: ' + response.data.message);
+      }
   
     } catch (error) {
       console.log(error)

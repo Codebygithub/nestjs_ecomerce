@@ -85,7 +85,7 @@ export class OrderService {
 
     if(order.status === OrderStatus.CENCELLED) return order
     
-    if(currentUser.id !== order.updatedBy.id) {
+    if(currentUser.id !== order.user.id) {
       throw new UnauthorizedException("You don't have permission to perform this action")
     }
 

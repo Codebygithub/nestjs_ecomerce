@@ -8,6 +8,8 @@ import { Roles } from 'src/utility/common/user-role.enum';
 import { AuthorizeRoles } from 'src/utility/decorators/authorize-role.decorator';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { cancelDto } from './dto/cancel-giaohangnhanh.dto';
+import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Controller('giaohangnhanh')
 export class GiaohangnhanhController {
@@ -45,9 +47,9 @@ export class GiaohangnhanhController {
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @Post('cancelOrder/:id')
-  async cancel(@Body() CanncelDto:cancelDto,@Param('id')id:string)
+  async cancel(@Body() CanncelDto:cancelDto,@Param('id')id:string,@CurrentUser() currentUser:UserEntity)
   {
-    const res = await this.giaohangnhanhService.cancel(CanncelDto,+id)
+    const res = await this.giaohangnhanhService.cancel(CanncelDto,+id,currentUser)
     return res
   }
 
