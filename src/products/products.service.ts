@@ -215,10 +215,11 @@ export class ProductsService {
     return await this.productRepository.save(product)
   }
 
-  async remove(id: number) {
+  async remove(id: number,currentUser:UserEntity) {
     const product = await this.findOne(id)
     let order = await this.orderService.findOneByProduct(product.id)
     if(order) throw new BadRequestException('order in use ')
+    product.addedBy = currentUser
     return await this.productRepository.remove(product)
   }
 

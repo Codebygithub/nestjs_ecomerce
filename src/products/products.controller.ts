@@ -103,10 +103,12 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  remove(@Param('id') id: string , @CurrentUser() currentUser:UserEntity) {
+    return this.productsService.remove(+id,currentUser);
   }
   @Get('getRecommendedProduct/:productId')
+  @Throttle({default:{ttl:10000,limit:5}})
+  @UseInterceptors(CacheInterceptor)
   async getRecommendedProduct(@Param('productId',ParseIntPipe) productId:number): Promise<ProductEntity[]>{
     const res = await this.productsService.getRecommededProduct(productId)
     return res
