@@ -1,4 +1,5 @@
 // discount.entity.ts
+import { DiscountType } from 'src/order/enum/discount-type.enum';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
@@ -19,6 +20,24 @@ export class DiscountEntity {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   endDate: Date;
+
+  @Column({ default: 0 })
+  maxUses: number;
+
+  @Column({ default: 0 })
+  usedCount: number;
+
+  @Column({ nullable: true })
+  type: DiscountType; 
+
+  @Column({ nullable: true })
+  minimumAmount: number;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({default:false})
+  use:boolean
 
   @ManyToOne(() => UserEntity, user => user.discounts)
   updateBy: UserEntity;
