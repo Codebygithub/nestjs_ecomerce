@@ -27,7 +27,7 @@ export class DiscountEntity {
   @Column({ default: 0 })
   usedCount: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true,default:DiscountType.PERCENTAGE })
   type: DiscountType; 
 
   @Column({ nullable: true })

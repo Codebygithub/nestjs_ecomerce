@@ -10,12 +10,12 @@ export class CreateDiscountDto {
     @IsNotEmpty()
     @IsString()
     code:string;
-    
+
     @IsNotEmpty()
     startDate:Date;
 
     @IsNotEmpty()
-    endDate:Date;
+    endDate:Date;   
 
     @IsNotEmpty()
     maxUses:number;
