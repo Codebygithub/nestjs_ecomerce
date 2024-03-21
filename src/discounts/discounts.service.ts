@@ -25,29 +25,33 @@ export class DiscountsService {
     const discount = await this.discountRepository.findOne({
       where:{code:applyDiscoutDto.code}
     })
-    console.log('discount service' , discount)
   
     if(discount && discount.use !=true && new Date() <= discount.endDate){
       const user = await this.userService.findOne(+applyDiscoutDto.userId)
       if(!user) throw new NotFoundException('USER NOT FOUND')
-      console.log('user',user)
 
       const existingUsage = await this.discoutUserRepository.findOne({
         where:{discount,user}
       })
-      console.log('existingUsage' , existingUsage)
-      if(existingUsage) return null
+      if(!existingUsage) {
       const discountUser = new DiscountUserEntity()
+     
       discountUser.discount = discount
       discountUser.user = applyDiscoutDto.userId
       discountUser.usedAt = new Date()
-      await this.discoutUserRepository.save(discountUser)
-      discount.use = true
-      discount.usedCount++
+      discountUser.used = true
+      
+      const res = await this.discoutUserRepository.save(discountUser)
+      console.log('resss', res)
       if(discount.usedCount > discount.maxUses)  throw new BadRequestException('USED COUNT OVER MAX USED ')
+      discount.usedCount++
+      discount.use = true
       await this.discountRepository.save(discount)
       return discount
     }
+  } else{
+    throw new BadRequestException('Discount has already been used by this user');
+  }
     return null
   }
   async isDiscountValid(code: string): Promise<boolean> {

@@ -51,7 +51,6 @@ export class DiscountsController {
   @Post('apply')
   async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
     const discount = await this.discountsService.applyDiscount(applyDiscoutDto);
-    console.log('discount',discount)
     if (discount) {
       return { success: true, discount };
     } else {

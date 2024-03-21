@@ -13,6 +13,9 @@ export class DiscountUserEntity {
 
   @ManyToOne(() => UserEntity, user => user.discountsUser)
   user: UserEntity;
+  
+  @Column({default:false})
+  used:boolean
 
   @Column({ default: () => 'CURRENT_TIMESTAMP' })
   usedAt: Date;
