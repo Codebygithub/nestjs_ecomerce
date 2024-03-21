@@ -7,9 +7,10 @@ import { ProductsModule } from 'src/products/products.module';
 import { UserModule } from 'src/user/user.module';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { DiscountUserEntity } from './entities/discount-user.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([DiscountEntity,ProductEntity , UserEntity]),ProductsModule , UserModule],
+  imports:[TypeOrmModule.forFeature([DiscountEntity,ProductEntity , UserEntity,DiscountUserEntity]),ProductsModule , UserModule],
   controllers: [DiscountsController],
   providers: [DiscountsService],
 })

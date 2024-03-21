@@ -1,6 +1,7 @@
 import { CartEntity } from "src/cart/entities/cart.entity";
 import { CategoryEntity } from "src/categories/entities/category.entity";
 import { ChatEntity } from "src/chat/entities/chat.entity";
+import { DiscountUserEntity } from "src/discounts/entities/discount-user.entity";
 import { DiscountEntity } from "src/discounts/entities/discount.entity";
 import { OrderEntity } from "src/order/entities/order.entity";
 import { ProductEntity } from "src/products/entities/product.entity";
@@ -61,6 +62,11 @@ export class UserEntity {
 
     @OneToMany(() => DiscountEntity, discount => discount.updateBy)
     discounts: DiscountEntity[];
+
+    
+    @OneToMany(() => DiscountUserEntity, discountUser => discountUser.user)
+    discountsUser: DiscountUserEntity[];
+
 }
 
    

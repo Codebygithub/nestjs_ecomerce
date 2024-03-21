@@ -9,6 +9,7 @@ import { AuthenticationGuard } from 'src/utility/guard/authentication.guard';
 import { AuthorizeGuard } from 'src/utility/guard/authorization.guard';
 import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { ApplyDiscountDto } from './dto/apply-discount.dto';
 
 @Controller('discounts')
 export class DiscountsController {
@@ -46,6 +47,18 @@ export class DiscountsController {
     const res = await  this.discountsService.CountDiscount(code);
     return res
   }
+
+  @Post('apply')
+  async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
+    const discount = await this.discountsService.applyDiscount(applyDiscoutDto);
+    console.log('discount',discount)
+    if (discount) {
+      return { success: true, discount };
+    } else {
+      return { success: false, message: 'Invalid or expired discount code.' };
+    }
+  }
+
 
   @Get('user/:code')
   async userUseDiscount(@Param('code') code:string )

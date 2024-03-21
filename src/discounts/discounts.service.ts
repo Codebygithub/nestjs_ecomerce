@@ -1,23 +1,55 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DiscountEntity } from './entities/discount.entity';
 import { Repository } from 'typeorm';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
+import { ApplyDiscountDto } from './dto/apply-discount.dto';
+import { DiscountUserEntity } from './entities/discount-user.entity';
 
 @Injectable()
 export class DiscountsService {
   constructor(
     @InjectRepository(DiscountEntity) 
     private readonly discountRepository:Repository<DiscountEntity>,
-    private readonly userService:UserService
+    private readonly userService:UserService,
+    @InjectRepository(DiscountUserEntity) private readonly discoutUserRepository:Repository<DiscountUserEntity>
   ){}
 
   async getDiscountByCode(code: string): Promise<DiscountEntity | null> {
     return await this.discountRepository.findOne({ where: { code } });
   }
 
+  async applyDiscount(applyDiscoutDto:ApplyDiscountDto):Promise<DiscountEntity | null> {
+    const discount = await this.discountRepository.findOne({
+      where:{code:applyDiscoutDto.code}
+    })
+    console.log('discount service' , discount)
+  
+    if(discount && discount.use !=true && new Date() <= discount.endDate){
+      const user = await this.userService.findOne(+applyDiscoutDto.userId)
+      if(!user) throw new NotFoundException('USER NOT FOUND')
+      console.log('user',user)
+
+      const existingUsage = await this.discoutUserRepository.findOne({
+        where:{discount,user}
+      })
+      console.log('existingUsage' , existingUsage)
+      if(existingUsage) return null
+      const discountUser = new DiscountUserEntity()
+      discountUser.discount = discount
+      discountUser.user = applyDiscoutDto.userId
+      discountUser.usedAt = new Date()
+      await this.discoutUserRepository.save(discountUser)
+      discount.use = true
+      discount.usedCount++
+      if(discount.usedCount > discount.maxUses)  throw new BadRequestException('USED COUNT OVER MAX USED ')
+      await this.discountRepository.save(discount)
+      return discount
+    }
+    return null
+  }
   async isDiscountValid(code: string): Promise<boolean> {
     const discount = await this.getDiscountByCode(code);
     if (!discount) return false;

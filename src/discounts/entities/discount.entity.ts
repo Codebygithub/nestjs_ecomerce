@@ -2,7 +2,8 @@
 import { DiscountType } from 'src/order/enum/discount-type.enum';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { DiscountUserEntity } from './discount-user.entity';
 
 @Entity()
 export class DiscountEntity {
@@ -44,4 +45,8 @@ export class DiscountEntity {
 
   @ManyToOne(() => ProductEntity, product => product.discounts)
   product: ProductEntity;
+
+  @OneToMany(() => DiscountUserEntity, discountUser => discountUser.discount)
+  users: DiscountUserEntity[];
+
 }
