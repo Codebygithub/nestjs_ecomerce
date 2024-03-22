@@ -51,11 +51,7 @@ export class DiscountsController {
   @Post('apply')
   async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
     const discount = await this.discountsService.applyDiscount(applyDiscoutDto);
-    if (discount) {
-      return { success: true, discount };
-    } else {
-      return { success: false, message: 'Invalid or expired discount code.' };
-    }
+    return discount
   }
 
 
