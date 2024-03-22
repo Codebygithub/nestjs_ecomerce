@@ -23,8 +23,7 @@ export class DiscountsService {
 
   async applyDiscount(applyDiscountDto: ApplyDiscountDto): Promise<DiscountEntity> {
     const discount = await this.discountRepository.findOne({
-      where: { code: applyDiscountDto.code },
-      relations:{users:true}
+      where: { code: applyDiscountDto.code }
     });
 
     if (!discount) {
@@ -41,11 +40,15 @@ export class DiscountsService {
       throw new NotFoundException('User not found');
     }
 
-    const existingUsage = await this.discoutUserRepository.findOne({
-      where:{user,discount},
-      relations:{user:true , discount:true}
-    });
-    console.log('exitsssssssssssssssss', existingUsage)
+    const existingUsage = await this.discoutUserRepository
+    .createQueryBuilder('du')
+    .where('du.discountId = :discountId', { discountId: discount.id })
+    .andWhere('du.userId = :userId', { userId: user.id })
+    .getOne();
+  
+  console.log('existingUsage', existingUsage);
+  
+
     if (existingUsage ) {
       throw new BadRequestException('NOOOO')
     }
@@ -65,10 +68,7 @@ export class DiscountsService {
   
       await this.discountRepository.save(discount);
 
-      if(discountUser.used == true) 
-       {
-        discount.use = true
-       }
+      
     }
     
     

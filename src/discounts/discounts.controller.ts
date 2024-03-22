@@ -50,8 +50,12 @@ export class DiscountsController {
 
   @Post('apply')
   async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
-    const discount = await this.discountsService.applyDiscount(applyDiscoutDto);
-    return discount
+    try {
+      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto);
+      return { success: true, data: discountResult };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   }
 
 
