@@ -1,12 +1,13 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DiscountEntity } from './entities/discount.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { ApplyDiscountDto } from './dto/apply-discount.dto';
 import { DiscountUserEntity } from './entities/discount-user.entity';
+import { UpdateDiscountDto } from './dto/update-discount.dto';
 
 @Injectable()
 export class DiscountsService {
@@ -30,6 +31,40 @@ export class DiscountsService {
   
     // Xóa discount
     await this.discountRepository.remove(discount);
+    return discount
+  }
+
+  async updateDiscount(id:number, updateDiscountDto:UpdateDiscountDto,currentUser:UserEntity)
+  {
+    const discount = await this.getDiscountById(id)
+    if(!discount) throw new NotFoundException('DISCOUNT NOT FOUND')
+    if(currentUser.id !== discount.updateBy.id ) 
+    throw new UnauthorizedException("You don't have permission to perform this action.")
+    for (const [key, value] of Object.entries(updateDiscountDto)) {
+      switch (key) {
+        case 'discountMaxUse':
+          discount.maxUses = value;
+          break;
+        case 'discountEndDate':
+          discount.endDate = new Date(value);
+          break;
+        case 'discountStartDate':
+          discount.startDate = new Date(value);
+          break;
+        case 'discountMinimumAmount':
+          discount.minimumAmount = value;
+          break;
+        case 'discoutValue':
+          discount.value = value;
+          break;
+      }
+    }
+    if(discount.startDate > discount.endDate) {
+      throw new BadRequestException('The start date must be earlier than the end date.')
+    }
+    discount.updateBy = currentUser
+
+    await this.discountRepository.save(discount)
     return discount
   }
 
@@ -95,6 +130,7 @@ export class DiscountsService {
       where:{id},
       relations:{updateBy:true,users:true , product:true}
     })
+    if(!discount) throw new NotFoundException('DISCOUNT NOT FOUND')
     return discount
 
 
@@ -133,10 +169,7 @@ export class DiscountsService {
     return await this.discountRepository.save(discount)
   }
     
-  async checkDiscountAvailableForUser(
-    userId: number,
-    discountCode: string,
-  ): Promise<boolean> {
+  async checkDiscountAvailableForUser(userId: number,discountCode: string,): Promise<boolean> {
     const discount = await this.discountRepository.findOne({
       where: { code: discountCode },
       relations: {
@@ -179,12 +212,7 @@ export class DiscountsService {
     discount.updateBy = currentUser
     await this.discountRepository.save(discount)
     return discount
-  }
-
-
-
- 
-
+    }
   }
 
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Put } from '@nestjs/common';
 import { DiscountsService } from './discounts.service';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
@@ -37,9 +37,19 @@ export class DiscountsController {
     }
     
   }
+
+  @Put(':id')
+  @AuthorizeRoles(Roles.ADMIN)  
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  async updateDiscount(@Param('id') id:string ,@Body() updateDiscountDto:UpdateDiscountDto, @CurrentUser() currentUser:UserEntity){
+    const discount = await this.discountsService.updateDiscount(+id , updateDiscountDto,currentUser)
+    return discount
+
+  }
+
   
   @Post('create-discount')
-  @AuthorizeRoles(Roles.ADMIN)  
+  @AuthorizeRoles(Roles.USER ,Roles.ADMIN)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   async createDiscount(@Body()discountData:CreateDiscountDto , @CurrentUser() currentUser:UserEntity): Promise<DiscountEntity>{
     const res = await this.discountsService.createDiscount(discountData,currentUser)
@@ -58,6 +68,8 @@ export class DiscountsController {
   }
 
   @Post('apply')
+  @AuthorizeRoles(Roles.USER)  
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
   async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
     try {
       const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto);
