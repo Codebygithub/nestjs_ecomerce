@@ -15,6 +15,15 @@ import { ApplyDiscountDto } from './dto/apply-discount.dto';
 export class DiscountsController {
   constructor(private readonly discountsService: DiscountsService) {}
 
+
+  @Delete(':id')
+  async deleteDiscount(@Param('id') id:number):Promise<DiscountEntity>
+  {
+    const discount = await this.discountsService.deleteDiscount(id)
+    return discount
+    
+    
+  }
   @Get(':code')
   async getDiscountByCode(@Param('code') code:string){
     const isvalid = await this.discountsService.isDiscountValid(code)
@@ -39,7 +48,7 @@ export class DiscountsController {
 
   @Get('checkAvailable/:userId/:code')
   async checkAvailableForUser(@Param('userId') userId:number , @Param('code') code:string){
-    const res = await this.discountsService.checkDiscountAvailableForUser(+userId,code)
+    const res = await this.discountsService.checkDiscountAvailableForUser(userId,code)
     return res
   }
   @Post('use/:code')

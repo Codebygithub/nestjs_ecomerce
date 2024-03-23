@@ -21,6 +21,18 @@ export class DiscountsService {
     return await this.discountRepository.findOne({ where: { code } });
   }
 
+  async deleteDiscount(id: number):Promise<DiscountEntity> {
+    const discount = await this.getDiscountById(id);
+    if (!discount) throw new NotFoundException('DISCOUNT NOT FOUND');
+  
+    // Xóa mối quan hệ trong bảng trung gian (nếu có)
+    await this.discoutUserRepository.delete({ discount: { id } });
+  
+    // Xóa discount
+    await this.discountRepository.remove(discount);
+    return discount
+  }
+
   async applyDiscount(applyDiscountDto: ApplyDiscountDto): Promise<DiscountEntity> {
     const discount = await this.discountRepository.findOne({
       where: { code: applyDiscountDto.code }
@@ -58,21 +70,13 @@ export class DiscountsService {
       discountUser.user = user;
       discountUser.usedAt = new Date();
       discountUser.used = true;
-  
       await this.discoutUserRepository.save(discountUser);
-  
       discount.usedCount++;
       if (discount.usedCount >= discount.maxUses) {
-        discount.use = true;
+        await this.deleteDiscount(discount.id)
       }
-  
       await this.discountRepository.save(discount);
-
-      
     }
-    
-    
-
     return discount;
     
   }
@@ -89,7 +93,7 @@ export class DiscountsService {
   async getDiscountById(id:number): Promise<DiscountEntity>{
     const discount =  await this.discountRepository.findOne({
       where:{id},
-      relations:{updateBy:true}
+      relations:{updateBy:true,users:true , product:true}
     })
     return discount
 
@@ -159,9 +163,7 @@ export class DiscountsService {
 
 
 
-  async deleteDiscount(id: number): Promise<void> {
-    await this.discountRepository.delete(id);
-  }
+ 
 
   async generateRandomCode(length: number): Promise<string> {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
