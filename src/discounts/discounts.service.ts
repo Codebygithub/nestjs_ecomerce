@@ -11,6 +11,8 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { SavedDiscountEntity } from './entities/save-discount.entity';
 import { saveDiscountDto } from './dto/save-discount.dto';
 import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
+import { DeleteSaveDiscountDto } from './dto/delete-Savediscount.dto';
+import { throws } from 'assert';
 
 @Injectable()
 export class DiscountsService {
@@ -24,6 +26,25 @@ export class DiscountsService {
 
   async getDiscountByCode(code: string): Promise<DiscountEntity | null> {
     return await this.discountRepository.findOne({ where: { code } });
+  }
+
+  async deleteSaveDiscout(id:number,deleteSaveDiscountDto:DeleteSaveDiscountDto , currentUser:UserEntity):Promise<void> {
+    const discount = await this.getDiscountById(id)
+    if(!discount) throw new NotFoundException('NOT FOUND')
+    const user = await this.userService.findOne(+deleteSaveDiscountDto.userId)
+    if(!user) throw new NotFoundException('NOT FOUND')
+
+    const existingUsage = await this.saveDiscountRepository
+    .createQueryBuilder('du')
+    .where('du.discountId = :discountId', { discountId: discount.id })
+    .andWhere('du.userId = :userId', { userId: user.id })
+    .getOne();
+    
+
+    if(!existingUsage) throw new NotFoundException('Saved discount not found');
+    await this.saveDiscountRepository.remove(existingUsage)
+   
+    
   }
 
   async deleteDiscount(id: number):Promise<DiscountEntity> {

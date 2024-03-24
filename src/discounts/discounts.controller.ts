@@ -11,69 +11,69 @@ import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { ApplyDiscountDto } from './dto/apply-discount.dto';
 import { saveDiscountDto } from './dto/save-discount.dto';
+import { DeleteSaveDiscountDto } from './dto/delete-Savediscount.dto';
 
 @Controller('discounts')
 export class DiscountsController {
-  constructor(private readonly discountsService: DiscountsService) {}
+  constructor(private readonly discountsService: DiscountsService) { }
 
 
   @Delete(':id')
-  async deleteDiscount(@Param('id') id:number):Promise<DiscountEntity>
-  {
+  async deleteDiscount(@Param('id') id: number): Promise<DiscountEntity> {
     const discount = await this.discountsService.deleteDiscount(id)
     return discount
-    
-    
+
+
   }
   @Get(':code')
-  async getDiscountByCode(@Param('code') code:string){
+  async getDiscountByCode(@Param('code') code: string) {
     const isvalid = await this.discountsService.isDiscountValid(code)
-    if(isvalid) {
+    if (isvalid) {
       const discount = await this.discountsService.getDiscountByCode(code)
-      
+
       return discount
     }
-    else{
-      return {msg:'Discount code is not valid or has expired' }
+    else {
+      return { msg: 'Discount code is not valid or has expired' }
     }
-    
+
   }
 
   @Put(':id')
-  @AuthorizeRoles(Roles.ADMIN)  
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async updateDiscount(@Param('id') id:string ,@Body() updateDiscountDto:UpdateDiscountDto, @CurrentUser() currentUser:UserEntity){
-    const discount = await this.discountsService.updateDiscount(+id , updateDiscountDto,currentUser)
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  async updateDiscount(@Param('id') id: string, @Body() updateDiscountDto: UpdateDiscountDto, @CurrentUser() currentUser: UserEntity) {
+    const discount = await this.discountsService.updateDiscount(+id, updateDiscountDto, currentUser)
     return discount
 
   }
 
-  
+
   @Post('create-discount')
-  @AuthorizeRoles(Roles.USER ,Roles.ADMIN)  
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async createDiscount(@Body()discountData:CreateDiscountDto , @CurrentUser() currentUser:UserEntity): Promise<DiscountEntity>{
-    const res = await this.discountsService.createDiscount(discountData,currentUser)
+  @AuthorizeRoles(Roles.USER, Roles.ADMIN)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  async createDiscount(@Body() discountData: CreateDiscountDto, @CurrentUser() currentUser: UserEntity): Promise<DiscountEntity> {
+    const res = await this.discountsService.createDiscount(discountData, currentUser)
     return res
   }
 
   @Get('checkAvailable/:userId/:code')
-  async checkAvailableForUser(@Param('userId') userId:number , @Param('code') code:string){
-    const res = await this.discountsService.checkDiscountAvailableForUser(userId,code)
+  async checkAvailableForUser(@Param('userId') userId: number, @Param('code') code: string) {
+    const res = await this.discountsService.checkDiscountAvailableForUser(userId, code)
     return res
   }
   @Post('use/:code')
   async countDiscount(@Param('code') code: string): Promise<DiscountEntity> {
-    const res = await  this.discountsService.CountDiscount(code);
+    const res = await this.discountsService.CountDiscount(code);
     return res
   }
 
   @Post('apply')
-  @AuthorizeRoles(Roles.USER)  
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto,@CurrentUser() currentUser:UserEntity) {
+  @AuthorizeRoles(Roles.USER)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  async applyDiscount(@Body() applyDiscoutDto: ApplyDiscountDto, @CurrentUser() currentUser: UserEntity) {
     try {
-      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto,currentUser);
+      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto, currentUser);
       return { success: true, data: discountResult };
     } catch (error) {
       return { success: false, message: error.message };
@@ -81,22 +81,29 @@ export class DiscountsController {
   }
 
   @Post('saved')
-  async saveDiscount(@Body() saveDiscountDto:saveDiscountDto,@CurrentUser()currentUser:UserEntity) {
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  async saveDiscount(@Body() saveDiscountDto: saveDiscountDto, @CurrentUser() currentUser: UserEntity) {
     try {
-      const saveDiscount = await this.discountsService.saveDiscount(saveDiscountDto,currentUser)
-      return{success:true,data:saveDiscount}
-    } catch (error) {
-      return {success:false,msg:error.message}
+      const saveDiscount = await this.discountsService.saveDiscount(saveDiscountDto, currentUser)
+      return { success: true, data: saveDiscount }
+    }
+    catch (error) {
+      return { success: false, msg: error.message }
     }
   }
 
-
-  @Get('user/:code')
-  async userUseDiscount(@Param('code') code:string )
-  {
-    const res=  await this.discountsService.userUseDiscount(code,)
+  @Delete(':id')
+  async deleteSaveDiscount(@Param('id') id:string , @Body() deleteSaveDiscountDto:DeleteSaveDiscountDto , @CurrentUser() currentUser:UserEntity){
+    const res = await this.discountsService.deleteSaveDiscout(+id , deleteSaveDiscountDto, currentUser)
     return res
   }
 
- 
+  @Get('user/:code')
+  async userUseDiscount(@Param('code') code: string) {
+    const res = await this.discountsService.userUseDiscount(code,)
+    return res
+  }
+
+
 }
