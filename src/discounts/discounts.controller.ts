@@ -10,6 +10,7 @@ import { AuthorizeGuard } from 'src/utility/guard/authorization.guard';
 import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { ApplyDiscountDto } from './dto/apply-discount.dto';
+import { saveDiscountDto } from './dto/save-discount.dto';
 
 @Controller('discounts')
 export class DiscountsController {
@@ -70,12 +71,22 @@ export class DiscountsController {
   @Post('apply')
   @AuthorizeRoles(Roles.USER)  
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto) {
+  async applyDiscount(@Body() applyDiscoutDto:ApplyDiscountDto,@CurrentUser() currentUser:UserEntity) {
     try {
-      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto);
+      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto,currentUser);
       return { success: true, data: discountResult };
     } catch (error) {
       return { success: false, message: error.message };
+    }
+  }
+
+  @Post('saved')
+  async saveDiscount(@Body() saveDiscountDto:saveDiscountDto,@CurrentUser()currentUser:UserEntity) {
+    try {
+      const saveDiscount = await this.discountsService.saveDiscount(saveDiscountDto,currentUser)
+      return{success:true,data:saveDiscount}
+    } catch (error) {
+      return {success:false,msg:error.message}
     }
   }
 

@@ -4,6 +4,7 @@ import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { DiscountUserEntity } from './discount-user.entity';
+import { SavedDiscountEntity } from './save-discount.entity';
 
 @Entity()
 export class DiscountEntity {
@@ -48,5 +49,8 @@ export class DiscountEntity {
 
   @OneToMany(() => DiscountUserEntity, discountUser => discountUser.discount)
   users: DiscountUserEntity[];
+
+  @OneToMany(()=>SavedDiscountEntity ,saveDiscount =>saveDiscount.discount )
+  savedDiscounts : SavedDiscountEntity[]
 
 }

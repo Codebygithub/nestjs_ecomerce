@@ -3,6 +3,7 @@ import { CategoryEntity } from "src/categories/entities/category.entity";
 import { ChatEntity } from "src/chat/entities/chat.entity";
 import { DiscountUserEntity } from "src/discounts/entities/discount-user.entity";
 import { DiscountEntity } from "src/discounts/entities/discount.entity";
+import { SavedDiscountEntity } from "src/discounts/entities/save-discount.entity";
 import { OrderEntity } from "src/order/entities/order.entity";
 import { ProductEntity } from "src/products/entities/product.entity";
 import { ReviewEntity } from "src/review/entities/review.entity";
@@ -66,6 +67,9 @@ export class UserEntity {
     
     @OneToMany(() => DiscountUserEntity, discountUser => discountUser.user)
     discountsUser: DiscountUserEntity[];
+
+    @OneToMany(()=>SavedDiscountEntity , savediscount =>savediscount.user)
+    savedDiscounts : SavedDiscountEntity []
 
 }
 

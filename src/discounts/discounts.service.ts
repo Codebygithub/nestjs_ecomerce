@@ -8,6 +8,9 @@ import { UserService } from 'src/user/user.service';
 import { ApplyDiscountDto } from './dto/apply-discount.dto';
 import { DiscountUserEntity } from './entities/discount-user.entity';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
+import { SavedDiscountEntity } from './entities/save-discount.entity';
+import { saveDiscountDto } from './dto/save-discount.dto';
+import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 
 @Injectable()
 export class DiscountsService {
@@ -15,7 +18,8 @@ export class DiscountsService {
     @InjectRepository(DiscountEntity) 
     private readonly discountRepository:Repository<DiscountEntity>,
     private readonly userService:UserService,
-    @InjectRepository(DiscountUserEntity) private readonly discoutUserRepository:Repository<DiscountUserEntity>
+    @InjectRepository(DiscountUserEntity) private readonly discoutUserRepository:Repository<DiscountUserEntity>,
+    @InjectRepository(SavedDiscountEntity) private readonly saveDiscountRepository:Repository<SavedDiscountEntity>
   ){}
 
   async getDiscountByCode(code: string): Promise<DiscountEntity | null> {
@@ -62,13 +66,20 @@ export class DiscountsService {
     if(discount.startDate > discount.endDate) {
       throw new BadRequestException('The start date must be earlier than the end date.')
     }
+    if(new Date() > discount.endDate) 
+    {
+      throw new BadRequestException('Discount is over .')
+
+    }
     discount.updateBy = currentUser
 
     await this.discountRepository.save(discount)
     return discount
   }
 
-  async applyDiscount(applyDiscountDto: ApplyDiscountDto): Promise<DiscountEntity> {
+  
+
+  async applyDiscount(applyDiscountDto: ApplyDiscountDto,currentUser:UserEntity): Promise<DiscountEntity> {
     const discount = await this.discountRepository.findOne({
       where: { code: applyDiscountDto.code }
     });
@@ -110,8 +121,10 @@ export class DiscountsService {
       if (discount.usedCount >= discount.maxUses) {
         await this.deleteDiscount(discount.id)
       }
+      discountUser.user = currentUser
       await this.discountRepository.save(discount);
     }
+    
     return discount;
     
   }
@@ -193,11 +206,6 @@ export class DiscountsService {
     //So sánh số lần sử dụng với số lượng tối đa cho phép
     return userUsedCount < discount.maxUses; 
   }
-
-
-
- 
-
   async generateRandomCode(length: number): Promise<string> {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let code = '';
@@ -213,6 +221,45 @@ export class DiscountsService {
     await this.discountRepository.save(discount)
     return discount
     }
+  async saveDiscount(saveDiscountDto:saveDiscountDto,currentUser:UserEntity) {
+    const discount = await this.discountRepository.findOne({
+      where: { code: saveDiscountDto.code }
+    });
+
+    if (!discount) {
+      throw new BadRequestException('Discount is not available');
+    }
+
+    if (new Date() > discount.endDate) {
+      throw new BadRequestException('Discount is not available');
+    }
+
+    const user = await this.userService.findOne(+saveDiscountDto.userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const existingUsage = await this.saveDiscountRepository
+    .createQueryBuilder('du')
+    .where('du.discountId = :discountId', { discountId: discount.id })
+    .andWhere('du.userId = :userId', { userId: user.id })
+    .getOne();
+
+    if(existingUsage) throw new BadRequestException('Discount already saved for this user');
+  
+    const saveDiscount = new SavedDiscountEntity()
+    saveDiscount.discount = discount 
+    saveDiscount.user = user 
+    saveDiscount.saveAt = new Date()
+
+    if (discount.usedCount >= discount.maxUses) {
+      await this.deleteDiscount(discount.id)
+    }
+    saveDiscount.user = currentUser
+
+    return await this.saveDiscountRepository.save(saveDiscount)
   }
+}
 
 
