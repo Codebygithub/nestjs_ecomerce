@@ -26,7 +26,10 @@ export class CartService {
 
   if(!product) throw new NotFoundException('PRODUCT NOT FOUND')
 
-  let cartItem = await this.cartRepository.findOneBy({user,product})
+  let cartItem = await this.cartRepository.createQueryBuilder('cat')
+  .where('cat.productId = :productId', { productId: product.id })
+  .andWhere('cat.userId = :userId', { userId: user.id })
+  .getOne();
 
   if(!cartItem) {
     cartItem = new CartEntity()
@@ -37,7 +40,10 @@ export class CartService {
   }
   else{
     cartItem.quantity +=quantity
-  }
+    if(cartItem.quantity > product.stock) {
+      throw new BadRequestException(`Only ${product.stock} items are available in stock`)
+    }
+  } 
   return this.cartRepository.save(cartItem)
  }
 
