@@ -39,4 +39,21 @@ export class FavoriteService {
         }
   }
 
+  async removeFromFavorites(userId: number, productId: number) {
+    const user = await this.userService.findOne(userId)
+    if(!user ) throw new NotFoundException('USER NOT FOUND')
+    const product = await this.productService.findOne(productId)
+    if (!product) throw new NotFoundException('PRODUCT NOT FOUND');
+    const existingUsage = await this.favRepository
+    .createQueryBuilder('fav')
+    .where('fav.productId = :productId', { productId: product.id })
+    .andWhere('fav.userId = :userId', { userId: user.id })
+    .getOne();
+    if (!existingUsage) {
+      throw new Error('Favorite not found');
+    }
+    await this.favRepository.remove(existingUsage);
+    return 'Product removed from favorites';
+  }
+
 }

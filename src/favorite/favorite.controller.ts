@@ -13,4 +13,9 @@ export class FavoriteController {
     const res = await this.favoriteService.addtoFav(addFavoriteDto)
     return res;
   }
+
+  @Delete(':userId/:productId')
+  async removeFromFavorites(@Param('userId') userId: number, @Param('productId') productId: number) {
+    return this.favoriteService.removeFromFavorites(userId, productId);
+  }
 }
