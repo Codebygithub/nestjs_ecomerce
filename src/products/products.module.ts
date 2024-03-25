@@ -9,10 +9,11 @@ import { CACHE_MODULE_OPTIONS, CacheInterceptor, CacheModule, CacheModuleOptions
 import { UserModule } from 'src/user/user.module';
 import { OrderModule } from 'src/order/order.module';
 import { RateLimitService } from 'src/utility/service/rate-limit.service';
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([ProductEntity]),CategoriesModule , UserModule,
+  imports:[TypeOrmModule.forFeature([ProductEntity , CategoryEntity]),CategoriesModule , UserModule,
   forwardRef(()=>OrderModule),
   CacheModule.register<CacheModuleOptions>({
     isGlobal:true,

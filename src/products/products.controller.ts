@@ -16,6 +16,7 @@ import { SerializeIncludes } from 'src/utility/interceptors/serialize.intercepto
 import { productDto } from './dto/product.dto';
 import { Throttle } from '@nestjs/throttler';
 import { RateLimitService } from 'src/utility/service/rate-limit.service';
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 
 @Controller('products')
 export class ProductsController {
@@ -31,6 +32,13 @@ export class ProductsController {
     return await this.productsService.create(createProductDto,currentUser)
   }
 
+
+  @Get('suggest-categories')
+  async suggestCategories(): Promise<CategoryEntity[]> {
+    const n = +process.env.SUGGEST_PRODUCT; 
+    const res = await this.productsService.suggestCategoriesBySales(n);
+    return res
+  }
   @Get()
   @SerializeIncludes(productDto)
   @AuthorizeRoles(Roles.ADMIN)

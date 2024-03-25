@@ -30,6 +30,9 @@ export class ProductEntity {
   
   @Column({nullable:true,default:0})
   view:number
+
+  @Column({default: 0 })
+  saled:number
   
   @UpdateDateColumn()
   updatedAt:Timestamp;

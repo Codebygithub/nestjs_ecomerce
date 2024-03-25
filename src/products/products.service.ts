@@ -12,12 +12,14 @@ import { OrderStatus } from 'src/order/enum/order-status.enum';
 import dataSource from 'db/data_source';
 import { OrderService } from 'src/order/order.service';
 import { ReviewEntity } from 'src/review/entities/review.entity';
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(@InjectRepository(ProductEntity) private readonly productRepository:Repository<ProductEntity>,
   private readonly categoryService:CategoriesService,
   private readonly userService:UserService,
+  @InjectRepository(CategoryEntity) private readonly categoriesRepository:Repository<CategoryEntity>,
   @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService
   ){}
   async create(createProductDto: CreateProductDto,currentUser:UserEntity):Promise<ProductEntity> {
@@ -234,5 +236,16 @@ export class ProductsService {
     }
     product = await this.productRepository.save(product)
     return product;
+  }
+
+  async suggestCategoriesBySales(n:number): Promise<CategoryEntity[]> {
+    const categories = await this.categoriesRepository.createQueryBuilder('category')
+    .leftJoin('category.products','product')
+    .select('category.id , category.title,SUM(product.saled) AS totalSales')
+    .groupBy('category.id , category.title')
+    .orderBy('totalSales','DESC')
+    .limit(n)
+    .getRawMany()
+    return categories
   }
 }
