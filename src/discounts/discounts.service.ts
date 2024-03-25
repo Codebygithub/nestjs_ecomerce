@@ -10,9 +10,7 @@ import { DiscountUserEntity } from './entities/discount-user.entity';
 import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { SavedDiscountEntity } from './entities/save-discount.entity';
 import { saveDiscountDto } from './dto/save-discount.dto';
-import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 import { DeleteSaveDiscountDto } from './dto/delete-Savediscount.dto';
-import { throws } from 'assert';
 
 @Injectable()
 export class DiscountsService {
@@ -43,6 +41,7 @@ export class DiscountsService {
 
     if(!existingUsage) throw new NotFoundException('Saved discount not found');
     await this.saveDiscountRepository.remove(existingUsage)
+    
    
     
   }

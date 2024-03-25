@@ -17,6 +17,7 @@ import { BullModule } from '@nestjs/bull';
 import { CartModule } from './cart/cart.module';
 import { EmailModule } from './email/email.module';
 import { DiscountsModule } from './discounts/discounts.module';
+import { FavoriteModule } from './favorite/favorite.module';
 
 @Module({
   imports: [TypeOrmModule.forRoot(dataSourceOptions), 
@@ -43,6 +44,7 @@ import { DiscountsModule } from './discounts/discounts.module';
     }),
     CartModule,
     DiscountsModule,
+    FavoriteModule,
     
   
   ],

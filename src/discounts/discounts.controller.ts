@@ -93,7 +93,7 @@ export class DiscountsController {
     }
   }
 
-  @Delete(':id')
+  @Delete('user/:id')
   async deleteSaveDiscount(@Param('id') id:string , @Body() deleteSaveDiscountDto:DeleteSaveDiscountDto , @CurrentUser() currentUser:UserEntity){
     const res = await this.discountsService.deleteSaveDiscout(+id , deleteSaveDiscountDto, currentUser)
     return res
