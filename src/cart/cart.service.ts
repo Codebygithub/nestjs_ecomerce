@@ -48,7 +48,10 @@ export class CartService {
   return this.cartRepository.save(cartItem)
  }
 
- async getCart(userId: number): Promise<CartEntity[]> {
+ async getCart(userId: number): Promise<{
+  cartItem: CartEntity[];
+  totalQuantity:number
+}> {
   const cartItem = await this.cartRepository
   .createQueryBuilder('cart')
   .leftJoinAndSelect('cart.product','product')
@@ -57,9 +60,18 @@ export class CartService {
   if(!cartItem || cartItem.length === 0 ){
     throw new NotFoundException("CART IS EMPTY")
   }
-  return cartItem
+  const totalQuantity =this.getTotalQuantity(cartItem)
+  return {cartItem ,totalQuantity }
 }
 
+
+private getTotalQuantity(cartItems: CartEntity[]): number {
+  let totalQuantity = 0;
+  cartItems.forEach(item => {
+    totalQuantity += item.quantity;
+  });
+  return totalQuantity;
+}
   async checkCartQuantity(cartItems:CartEntity[]):Promise<void>{
   for(const cartItem of cartItems){
     const product = await this.productService.findOne(cartItem.product.id)
