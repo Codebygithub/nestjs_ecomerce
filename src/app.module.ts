@@ -37,6 +37,7 @@ import { FavoriteModule } from './favorite/favorite.module';
     }]),
     BullModule.forRoot({
       redis:{
+        
         host:'localhost',
         port:6379
       }

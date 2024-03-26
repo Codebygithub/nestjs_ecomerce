@@ -7,15 +7,17 @@ import { AddToCartDto } from './dto/add-to-card.dto';
 
 
 @Processor('cart')
-export class CartProcessor {
-  private readonly logger = new Logger(CartProcessor.name);
-
+export class CartQueueWorker {
   constructor(private readonly cartService: CartService) {}
 
-  @Process('addToCart')
-  async handleAddToCart(job: Job<AddToCartDto>): Promise<void> {
-    this.logger.debug(`Processing job ${job.id}: Add to cart`);
-    const data = job.data;
-    await this.cartService.addToCart(data);
+  @Process('getCart')
+  async handleGetCart(job: Job) {
+  const userId = job.data.userId;
+  const cartItems = await this.cartService.getCart(userId);
+  return cartItems; // Trả về kết quả của công việc
+
   }
 }
+
+  
+

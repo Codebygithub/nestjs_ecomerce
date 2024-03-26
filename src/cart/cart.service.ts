@@ -7,13 +7,14 @@ import { UserService } from 'src/user/user.service';
 import { AddToCartDto } from './dto/add-to-card.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { UpdateCartDto } from './dto/update-cart.dto';
+import { InjectQueue } from '@nestjs/bull';
 
 
 @Injectable()
 export class CartService {
  constructor(@InjectRepository(CartEntity) private readonly cartRepository:Repository<CartEntity>,
                                            private readonly productService:ProductsService,
-                                           private readonly userService:UserService
+                                           private readonly userService:UserService,
  ){}
 
   async addToCart(addToCartDto:AddToCartDto): Promise<CartEntity>{
@@ -88,8 +89,6 @@ export class CartService {
     {
       throw new BadRequestException('YOU ARE NOT OWNER THIS CART ITEM')
     }
-
-    
     return this.cartRepository.remove(cart)
   }
 
@@ -97,7 +96,8 @@ export class CartService {
     const {quantity , productId} = updateCartDto
 
     const cart = await this.cartRepository.findOne({
-      where:{id:cartId}
+      where:{id:cartId},
+      relations:{user:true}
     })
     if(!cart) throw new NotFoundException('CART NOT FOUND')
 
@@ -105,20 +105,21 @@ export class CartService {
 
     if(!product) throw new NotFoundException('PRODUCT NOT FOUND ')
 
-    if(currentUser.id !== cart.id) {
+    if(currentUser.id !== cart.user.id) {
       throw new UnauthorizedException('You are not owner of this Cart')
     }
-    if(quantity > product.stock) {
+    cart.quantity = quantity
+    if(cart.quantity > product.stock) {
       throw new BadRequestException('Requested quantity exceeds available stock')
     }
 
-    cart.quantity = quantity
     cart.user = currentUser
 
     if(quantity == 0 || quantity < 0 ) {
       await this.deleteCartInItem(cart.id,cart.user)
 
     }
+    await this.cartRepository.save(cart)
     return cart;
     
   }

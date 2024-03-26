@@ -17,7 +17,7 @@ import { OrderEntity } from 'src/order/entities/order.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CartProcessor } from './cart.processor';
+import { CartQueueWorker } from './cart.processor';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Module({
@@ -37,7 +37,7 @@ import { CacheInterceptor } from '@nestjs/cache-manager';
 
   ],
   controllers: [CartController],
-  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,CartProcessor,
+  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,CartQueueWorker,
     CacheInterceptor
   
   ],
