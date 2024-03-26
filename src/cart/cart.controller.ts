@@ -30,9 +30,9 @@ export class CartController {
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @UseInterceptors(CacheInterceptor)
-  async getCart(@Param('userId',ParseIntPipe) userId:number):Promise<CartEntity[]>{
-    const res = await this.cartService.getCart(userId)
-    await this.cartService.checkCartQuantity(res);
+  async getCart(@Param('userId') userId:string):Promise<CartEntity[]>{
+    const res = await this.cartService.getCart(+userId)
+     await this.cartService.checkCartQuantity(res);
     return res
   }
 

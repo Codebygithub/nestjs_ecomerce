@@ -47,17 +47,16 @@ export class CartService {
   return this.cartRepository.save(cartItem)
  }
 
-  async getCart(userId:number):Promise<CartEntity[]>
- {
-  const user=await this.userService.findOne(userId);
-  if(!user) throw new NotFoundException('USER NOT FOUND ')
-  return this.cartRepository.find(
-    {
-      where:{user},
-      relations:{product:true},
-      select:['id','product','quantity','user']
-    }
-  )
+ async getCart(userId: number): Promise<CartEntity[]> {
+  const cartItem = await this.cartRepository
+  .createQueryBuilder('cart')
+  .leftJoinAndSelect('cart.product','product')
+  .where('cart.user =:userId',{userId})
+  .getMany()
+  if(!cartItem || cartItem.length === 0 ){
+    throw new NotFoundException("CART IS EMPTY")
+  }
+  return cartItem
 }
 
   async checkCartQuantity(cartItems:CartEntity[]):Promise<void>{
