@@ -16,6 +16,8 @@ export class CartEntity {
   @ManyToOne(() => ProductEntity, product => product.cart)
   product: ProductEntity;
 
+  
+
 
 }
 

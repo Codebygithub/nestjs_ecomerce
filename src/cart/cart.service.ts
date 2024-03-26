@@ -50,7 +50,8 @@ export class CartService {
 
  async getCart(userId: number): Promise<{
   cartItem: CartEntity[];
-  totalQuantity:number
+  totalQuantity:number,
+  totalPrice:number
 }> {
   const cartItem = await this.cartRepository
   .createQueryBuilder('cart')
@@ -61,13 +62,21 @@ export class CartService {
     throw new NotFoundException("CART IS EMPTY")
   }
   const totalQuantity =this.getTotalQuantity(cartItem)
-  return {cartItem ,totalQuantity }
+  const totalPrice=  this.getCartTotal(cartItem)
+  return {cartItem ,totalQuantity , totalPrice }
 }
 
+private getCartTotal(cartItems:CartEntity[]){
+  let totalPrice = 0 
+  cartItems?.forEach((item)=>{
+    totalPrice += item.quantity * item.product.price
+  });
+  return totalPrice;
 
-private getTotalQuantity(cartItems: CartEntity[]): number {
-  let totalQuantity = 0;
-  cartItems.forEach(item => {
+}
+  private getTotalQuantity(cartItems: CartEntity[]): number {
+    let totalQuantity = 0;
+    cartItems.forEach(item => {
     totalQuantity += item.quantity;
   });
   return totalQuantity;

@@ -32,7 +32,8 @@ export class CartController {
   @UseInterceptors(CacheInterceptor)
   async getCart(@Param('userId') userId:string): Promise<{
     cartItem: CartEntity[];
-    totalQuantity:number
+    totalQuantity:number,
+    totalPrice:any;
   }>{
     const res = await this.cartService.getCart(+userId)
    
