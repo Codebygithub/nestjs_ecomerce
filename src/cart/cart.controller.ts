@@ -21,9 +21,15 @@ export class CartController {
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @UseInterceptors(CacheInterceptor)
-  async addToCart(@Body() addToCartDto:AddToCartDto): Promise<CartEntity>{
-    const res = await this.cartService.addToCart(addToCartDto)
-    return res
+  async addToCart(@Body() addToCartDto:AddToCartDto) {
+    try {
+      const res = await this.cartService.addToCart(addToCartDto);
+      console.log('res controller', res);
+      return res
+    } catch (error) {
+      console.error('Error in addToCart controller:', error);
+      throw error;
+    }
   }
 
   @Get(':userId')

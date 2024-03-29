@@ -8,6 +8,7 @@ import { AddToCartDto } from './dto/add-to-card.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 
 @Injectable()
@@ -15,38 +16,19 @@ export class CartService {
  constructor(@InjectRepository(CartEntity) private readonly cartRepository:Repository<CartEntity>,
                                            private readonly productService:ProductsService,
                                            private readonly userService:UserService,
+            @InjectQueue('cart')           private readonly cartQueue:Queue
  ){}
 
-  async addToCart(addToCartDto:AddToCartDto): Promise<CartEntity>{
-  const {userId , productId , quantity} = addToCartDto
+ async addToCart(addToCartDto: AddToCartDto) {
+ const res= await  this.cartQueue.add('addToCart', addToCartDto,{
+  removeOnComplete:true
+ });
+ console.log('res service' , res)
+ return res
+  
 
-  const user = await this.userService.findOne(userId)
-  if(!user) throw new NotFoundException('USER NOT FOUND')
 
-  const product = await this.productService.findOne(productId)
-
-  if(!product) throw new NotFoundException('PRODUCT NOT FOUND')
-
-  let cartItem = await this.cartRepository.createQueryBuilder('cat')
-  .where('cat.productId = :productId', { productId: product.id })
-  .andWhere('cat.userId = :userId', { userId: user.id })
-  .getOne();
-
-  if(!cartItem) {
-    cartItem = new CartEntity()
-    cartItem.product = product
-    cartItem.user = user
-    cartItem.quantity = quantity
-
-  }
-  else{
-    cartItem.quantity +=quantity
-    if(cartItem.quantity > product.stock) {
-      throw new BadRequestException(`Only ${product.stock} items are available in stock`)
-    }
-  } 
-  return this.cartRepository.save(cartItem)
- }
+}
 
  async getCart(userId: number): Promise<{
   cartItem: CartEntity[];

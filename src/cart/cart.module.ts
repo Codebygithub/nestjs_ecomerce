@@ -17,28 +17,20 @@ import { OrderEntity } from 'src/order/entities/order.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CartQueueWorker } from './cart.processor';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CartWorker } from './cart.worker';
 
 @Module({
   imports:[TypeOrmModule.forFeature([CartEntity , ProductEntity , UserEntity,CategoryEntity,OrderEntity,OrderProductsEntity]),
     BullModule.registerQueueAsync({
-      name:'cart',
-      imports:[ConfigModule],
-      inject:[ConfigService],
-      useFactory:async (configService:ConfigService) =>({
-        redis:{
-            host:configService.get<string>('REDIS_HOST'),
-            port:+configService.get<number>('REDIS_PORT')
-
-        }
-      })
+      name:'cart'
     })
+     
 
   ],
   controllers: [CartController],
-  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,CartQueueWorker,
-    CacheInterceptor
+  providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,
+    CacheInterceptor,CartWorker
   
   ],
   
