@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CartEntity } from './entities/cart.entity';
 import { Repository } from 'typeorm';
@@ -9,6 +9,7 @@ import { UserEntity } from 'src/user/entities/user.entity';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { Cache } from 'cache-manager';
 
 
 @Injectable()
@@ -16,7 +17,8 @@ export class CartService {
  constructor(@InjectRepository(CartEntity) private readonly cartRepository:Repository<CartEntity>,
                                            private readonly productService:ProductsService,
                                            private readonly userService:UserService,
-            @InjectQueue('cart')           private readonly cartQueue:Queue
+            @InjectQueue('cart')           private readonly cartQueue:Queue,
+            @Inject('CACHE_MANAGER') private readonly cacheManager:Cache
  ){}
 
  async addToCart(addToCartDto: AddToCartDto) {
@@ -34,7 +36,12 @@ export class CartService {
   cartItem: CartEntity[];
   totalQuantity:number,
   totalPrice:number
-}> {
+}> {  
+  const cacheKey =`cart:${userId}`
+  const cachedCart = await this.cacheManager.get(cacheKey)
+  if(cachedCart) {
+    return cachedCart as {cartItem:CartEntity[] , totalQuantity:number,totalPrice:number}
+  }
   const cartItem = await this.cartRepository
   .createQueryBuilder('cart')
   .leftJoinAndSelect('cart.product','product')
@@ -45,6 +52,7 @@ export class CartService {
   }
   const totalQuantity =this.getTotalQuantity(cartItem)
   const totalPrice=  this.getCartTotal(cartItem)
+  await this.cacheManager.set(cacheKey,{cartItem,totalPrice,totalQuantity})
   return {cartItem ,totalQuantity , totalPrice }
 }
 

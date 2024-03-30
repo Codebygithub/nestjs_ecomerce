@@ -17,16 +17,18 @@ import { OrderEntity } from 'src/order/entities/order.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheModule, CacheModuleOptions } from '@nestjs/cache-manager';
 import { CartWorker } from './cart.worker';
+import  *  as redisStore from "cache-manager-redis-store";
+import { config } from 'dotenv';
+import { Redis } from 'ioredis';
+
 
 @Module({
   imports:[TypeOrmModule.forFeature([CartEntity , ProductEntity , UserEntity,CategoryEntity,OrderEntity,OrderProductsEntity]),
     BullModule.registerQueueAsync({
       name:'cart'
     })
-     
-
   ],
   controllers: [CartController],
   providers: [CartService,ProductsService , UserService,CategoriesService,OrderService,EmailService,
