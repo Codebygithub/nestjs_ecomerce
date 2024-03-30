@@ -69,11 +69,11 @@ export class DiscountsController {
   }
 
   @Post('apply')
-  @AuthorizeRoles(Roles.USER)
+  @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard, AuthorizeGuard)
-  async applyDiscount(@Body() applyDiscoutDto: ApplyDiscountDto, @CurrentUser() currentUser: UserEntity) {
+  async applyDiscount(@Body() applyDiscoutDto: ApplyDiscountDto) {
     try {
-      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto, currentUser);
+      const discountResult = await this.discountsService.applyDiscount(applyDiscoutDto);
       return { success: true, data: discountResult };
     } catch (error) {
       return { success: false, message: error.message };

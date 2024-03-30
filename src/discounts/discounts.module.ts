@@ -9,11 +9,19 @@ import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { DiscountUserEntity } from './entities/discount-user.entity';
 import { SavedDiscountEntity } from './entities/save-discount.entity';
+import { BullModule } from '@nestjs/bull';
+import { discountWorker } from './discount.worker';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([DiscountEntity,ProductEntity , UserEntity,DiscountUserEntity,SavedDiscountEntity]),ProductsModule , UserModule],
+  imports:[TypeOrmModule.forFeature([DiscountEntity,ProductEntity , UserEntity,DiscountUserEntity,SavedDiscountEntity]),ProductsModule , UserModule,
+  BullModule.registerQueueAsync({
+    name:'discount'
+  })  ,
+]
+  
+  ,
   controllers: [DiscountsController],
-  providers: [DiscountsService],
+  providers: [DiscountsService,discountWorker],
   exports:[DiscountsService]
 })
 export class DiscountsModule {}

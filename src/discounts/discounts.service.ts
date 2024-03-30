@@ -11,6 +11,8 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
 import { SavedDiscountEntity } from './entities/save-discount.entity';
 import { saveDiscountDto } from './dto/save-discount.dto';
 import { DeleteSaveDiscountDto } from './dto/delete-Savediscount.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class DiscountsService {
@@ -19,7 +21,8 @@ export class DiscountsService {
     private readonly discountRepository:Repository<DiscountEntity>,
     private readonly userService:UserService,
     @InjectRepository(DiscountUserEntity) private readonly discoutUserRepository:Repository<DiscountUserEntity>,
-    @InjectRepository(SavedDiscountEntity) private readonly saveDiscountRepository:Repository<SavedDiscountEntity>
+    @InjectRepository(SavedDiscountEntity) private readonly saveDiscountRepository:Repository<SavedDiscountEntity>,
+    @InjectQueue('discount') private readonly discountQueue:Queue
   ){}
 
   async getDiscountByCode(code: string): Promise<DiscountEntity | null> {
@@ -99,54 +102,10 @@ export class DiscountsService {
 
   
 
-  async applyDiscount(applyDiscountDto: ApplyDiscountDto,currentUser:UserEntity): Promise<DiscountEntity> {
-    const discount = await this.discountRepository.findOne({
-      where: { code: applyDiscountDto.code }
-    });
-
-    if (!discount) {
-      throw new BadRequestException('Discount is not available');
-    }
-
-    if (discount.use == true || new Date() > discount.endDate) {
-      throw new BadRequestException('Discount is not available');
-    }
-
-    const user = await this.userService.findOne(+applyDiscountDto.userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const existingUsage = await this.discoutUserRepository
-    .createQueryBuilder('du')
-    .where('du.discountId = :discountId', { discountId: discount.id })
-    .andWhere('du.userId = :userId', { userId: user.id })
-    .getOne();
-  
-  console.log('existingUsage', existingUsage);
-  
-
-    if (existingUsage ) {
-      throw new BadRequestException('NOOOO')
-    }
-    else{
-      const discountUser = new DiscountUserEntity();
-      discountUser.discount = discount;
-      discountUser.user = user;
-      discountUser.usedAt = new Date();
-      discountUser.used = true;
-      await this.discoutUserRepository.save(discountUser);
-      discount.usedCount++;
-      if (discount.usedCount >= discount.maxUses) {
-        await this.deleteDiscount(discount.id)
-      }
-      discountUser.user = currentUser
-      await this.discountRepository.save(discount);
-    }
-    
-    return discount;
-    
+  async applyDiscount(applyDiscountDto: ApplyDiscountDto): Promise<DiscountEntity> {
+    const res = await this.discountQueue.add('applyDiscount',applyDiscountDto)
+    const rs  = await res.finished()
+    return rs
   }
 
 
