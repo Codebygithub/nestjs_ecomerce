@@ -103,7 +103,9 @@ export class DiscountsService {
   
 
   async applyDiscount(applyDiscountDto: ApplyDiscountDto): Promise<DiscountEntity> {
-    const res = await this.discountQueue.add('applyDiscount',applyDiscountDto)
+    const res = await this.discountQueue.add('applyDiscount',applyDiscountDto,{
+      removeOnComplete:true
+    })
     const rs  = await res.finished()
     return rs
   }
@@ -193,12 +195,12 @@ export class DiscountsService {
     }
     return code;
   }
-  async createDiscount(discountData:CreateDiscountDto,currentUser:UserEntity): Promise<DiscountEntity>{
-    const code = await this.generateRandomCode(5)
-    const discount =  this.discountRepository.create({code,...discountData})
-    discount.updateBy = currentUser
-    await this.discountRepository.save(discount)
-    return discount
+  async createDiscount(discountData:CreateDiscountDto): Promise<DiscountEntity>{
+    const res = await this.discountQueue.add('createDiscount',discountData,{
+      removeOnComplete:true
+    })
+    const rs = res.finished()
+    return rs
     }
   async saveDiscount(saveDiscountDto:saveDiscountDto,currentUser:UserEntity) {
     const discount = await this.discountRepository.findOne({

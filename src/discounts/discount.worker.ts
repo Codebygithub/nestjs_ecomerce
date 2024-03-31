@@ -8,6 +8,9 @@ import { Repository } from 'typeorm';
 import { ApplyDiscountDto } from './dto/apply-discount.dto';
 import { Job } from 'bull';
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { CreateDiscountDto } from './dto/create-discount.dto';
+import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 @Processor('discount')
 export class discountWorker {
     constructor(   
@@ -72,4 +75,11 @@ async applyDiscount(job:Job<ApplyDiscountDto>): Promise<DiscountEntity> {
     return discount;
     
   }
+@Process('createDiscount')
+async createDiscount(job:Job<CreateDiscountDto>):Promise<DiscountEntity>{
+  const {code , value , startDate,endDate,maxUses ,minimumAmount ,description} = job.data
+  const discount =  this.discountRepository.create({code,value,startDate,endDate,maxUses,minimumAmount,description})
+  const save = await this.discountRepository.save(discount)
+  return  save
+}
 }

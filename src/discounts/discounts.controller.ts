@@ -52,8 +52,8 @@ export class DiscountsController {
   @Post('create-discount')
   @AuthorizeRoles(Roles.USER, Roles.ADMIN)
   @UseGuards(AuthenticationGuard, AuthorizeGuard)
-  async createDiscount(@Body() discountData: CreateDiscountDto, @CurrentUser() currentUser: UserEntity): Promise<DiscountEntity> {
-    const res = await this.discountsService.createDiscount(discountData, currentUser)
+  async createDiscount(@Body() discountData: CreateDiscountDto): Promise<DiscountEntity> {
+    const res = await this.discountsService.createDiscount(discountData)
     return res
   }
 
