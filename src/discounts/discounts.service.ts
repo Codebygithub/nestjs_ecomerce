@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DiscountEntity } from './entities/discount.entity';
-import { Not, Repository } from 'typeorm';
+import { Like, Not, Repository } from 'typeorm';
 import { CreateDiscountDto } from './dto/create-discount.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
@@ -13,6 +13,7 @@ import { saveDiscountDto } from './dto/save-discount.dto';
 import { DeleteSaveDiscountDto } from './dto/delete-Savediscount.dto';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { filterDiscountDto } from './dto/filter-discount.dto';
 
 @Injectable()
 export class DiscountsService {
@@ -27,6 +28,20 @@ export class DiscountsService {
 
   async getDiscountByCode(code: string): Promise<DiscountEntity | null> {
     return await this.discountRepository.findOne({ where: { code } });
+  }
+
+  async getAll(userId:number,filterDiscountDto:filterDiscountDto): Promise<DiscountEntity[]>  {
+    const user = await this.userService.findOne(userId)
+    if(!user) throw new NotFoundException('USER NOT FOUND')
+    const discount = await this.discountRepository.find({
+        where:{updateBy:user}
+      }
+    ) 
+    if(!discount) throw new NotFoundException('DISCOUNT NOT FOUND')
+    
+    
+    return discount
+
   }
 
   async deleteSaveDiscout(id:number,deleteSaveDiscountDto:DeleteSaveDiscountDto , currentUser:UserEntity):Promise<void> {

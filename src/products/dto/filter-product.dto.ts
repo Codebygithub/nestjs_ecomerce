@@ -1,5 +1,11 @@
 export class FilterProductDto {
-    page:string;
-    items_per_page:string;
+    item_per_page:number 
+    page:number
     search:string
+    minPrice:number
+    maxPrice:number
+    maxRating:number
+    minRating:number 
+    
+
 }   

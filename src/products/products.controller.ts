@@ -45,7 +45,7 @@ export class ProductsController {
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @Throttle({default:{ttl:10000,limit:5}})
   @UseInterceptors(CacheInterceptor)
-  async findAll(@Query() query:any,@Req() req):Promise<productDto> {
+  async findAll(@Query() FilterProductDto:FilterProductDto,@Req() req):Promise<ProductEntity[]> {
     const ipAddress = req.ip
     const limit = +process.env.LIMIT
     const ttl = +process.env.TTL
@@ -53,7 +53,7 @@ export class ProductsController {
     if(!underLimit) {
       throw new BadRequestException('OVER REQUEST')
     }
-    const res = await this.productsService.findAll(query);
+    const res = await this.productsService.findAll(FilterProductDto);
     return res
   }
 

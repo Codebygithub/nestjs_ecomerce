@@ -1,9 +1,9 @@
-import { BadGatewayException, BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Inject, Injectable, NotFoundException, Search, forwardRef } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductEntity } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { FilterProductDto } from './dto/filter-product.dto';
@@ -13,6 +13,7 @@ import dataSource from 'db/data_source';
 import { OrderService } from 'src/order/order.service';
 import { ReviewEntity } from 'src/review/entities/review.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { min } from 'class-validator';
 
 @Injectable()
 export class ProductsService {
@@ -31,105 +32,45 @@ export class ProductsService {
     return await this.productRepository.save(product)
   }
 
-  async findAll(query:any):Promise<{product:any,totalProducts,limit}> {
-    let filterTotalProducts:number ;
-    let limit:number;
-
-    if(!query.limit)
-    {
-      limit = 4 
-
-    }
-    else{
-      limit = query.limit
-    }
-
-    const queryBuilder = dataSource.getRepository(ProductEntity)
-    .createQueryBuilder('product')
-    .leftJoinAndSelect('product.category','category')
-    .leftJoin('product.reviews','review')
-    .addSelect([
-      'COUNT(review.id) AS reviewCount',
-      'AVG(review.ratings::numeric(10,2) AS avgRating',
-    ])
-    .groupBy('product.id,category.id');
-
-    const totalProducts = await queryBuilder.getCount();
-
-    if(query.search)
-    {
-      const search = query.search
-       queryBuilder.andWhere('product.title like :title',{
-        title: `%${search}%`
-       })
-    }
-    if(query.category)
-    {
-      queryBuilder.andWhere('category.id=:id',{id:query.category})
-    }
-    if(query.minPrice !=undefined){
-      queryBuilder.andWhere("CAST(product.price as numeric) >= :minPrice",{ minPrice:query.minPrice})
-    }
-    if(query.maxPrice !=undefined){
-      queryBuilder.andWhere("CAST(product.price as numeric) <= :maxPrice",{ maxPrice:query.maxPrice})
-    }
-    if(query.minRating !=undefined){
-      queryBuilder.andWhere("review.ratings >= :rating",{ rating:query.minRating})
-    }
-    if(query.maxRating !=undefined){
-      queryBuilder.andWhere("review.ratings <= :rating",{ rating:query.maxRating})
-    }
-    
-    if(query.offset)
-    {
-      queryBuilder.offset(query.offset)
-    }
-
-    queryBuilder.limit(limit)
-
-    
-    
+  async findAll(query:FilterProductDto):Promise<any> {
+    const items_per_page = Number(query.item_per_page) || 10;
+    const page = Number(query.page) || 1;
+    const skip = (page - 1) * items_per_page;
+    const keyword = query.search || '';
+    const minPrice = Number(query.minPrice) || 0;
+    const maxPrice = Number(query.maxPrice) || Number.MAX_SAFE_INTEGER
+    const minRating = Number(query.minRating) || 0;
+    const maxRating = Number(query.maxRating) || 5; // Assuming maximum rating is 5
 
 
-    const products = await queryBuilder.getRawMany()
-    return {product:products,totalProducts,limit}
+    const [res,total] = await this.productRepository.findAndCount({
+      where:[
+        {title:Like(`%${keyword}%`)},
+        {price:MoreThanOrEqual(minPrice)},
+        {price:LessThanOrEqual(maxPrice)},
+        {reviews:MoreThanOrEqual(minRating)},
+        {reviews:LessThanOrEqual(maxRating)}
 
-
-
-    // const items_per_page = filterProductDto.items_per_page || 10 ; 
-    // const page = Number(filterProductDto.page) || 1 ;
-    // const skip = (page - 1 ) * +items_per_page
-    // const keyword = filterProductDto.search || ''
-    // const [res,total] =  await this.productRepository.findAndCount({
-    //   where:[
         
-    //     title:Like('%' + keyword +'%')},{
         
-    //   ],
-    //   order:{createdAt:"DESC"},
-    //   take:+items_per_page,
-    //   skip,
-    //   relations:{
-    //     addedBy:true,
-    //     category:true
-    //   },
-    //   select:['title','description','price','addedBy','category','createdAt','updatedAt','id']
+      ],
+      take:items_per_page,
+      skip,
+      select:['id','price','stock','title','reviews','category','createdAt','updatedAt']
+    })
 
-
-    // })
-    // const lastPage = Math.ceil(total/+items_per_page)
-    // const nextPage = page + 1 > lastPage ? null :page + 1
-    // const prevPage = page - 1 < 1 ? null : page - 1
-     
-    // return {
-    //   data : res , 
-    //   total , 
-    //   lastPage ,
-    //   prevPage ,
-    //   currentPage:page, 
-    //   nextPage
-    // }
-
+    const lastPage = Math.ceil(total/items_per_page)
+    const nextPage = page + 1  > lastPage ? null : page + 1 
+    const prevPage = page - 1 < 1 ? null : page - 1;
+    return {
+       data:res,
+      total,
+      currenPage: page,
+      nextPage,
+      prevPage,
+      lastPage
+  }
+    
   }
 
   async increaseViewCount(productId:number,currentUser:UserEntity):Promise<ProductEntity>{ 
