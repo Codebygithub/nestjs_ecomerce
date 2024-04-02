@@ -6,6 +6,7 @@ export class FilterProductDto {
     maxPrice:number
     maxRating:number
     minRating:number 
+    category:string
     
 
 }   

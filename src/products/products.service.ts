@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductEntity } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { FilterProductDto } from './dto/filter-product.dto';
@@ -42,21 +42,30 @@ export class ProductsService {
     const minRating = Number(query.minRating) || 0;
     const maxRating = Number(query.maxRating) || 5; // Assuming maximum rating is 5
 
+    const whereConditions:any = {
+      title:Like(`%${keyword}%`),
+      price:Between(minPrice,maxPrice)
+
+    }
+
+    if(query.category)
+    {
+      whereConditions.category = query.category
+    }
+  if(minRating !==0 || maxRating!==0 )
+  {
+    whereConditions.reviews = {
+      ratings:Between(minRating,maxRating)
+    }
+  }
+
 
     const [res,total] = await this.productRepository.findAndCount({
-      where:[
-        {title:Like(`%${keyword}%`)},
-        {price:MoreThanOrEqual(minPrice)},
-        {price:LessThanOrEqual(maxPrice)},
-        {reviews:MoreThanOrEqual(minRating)},
-        {reviews:LessThanOrEqual(maxRating)}
-
-        
-        
-      ],
+      where:whereConditions,
       take:items_per_page,
       skip,
-      select:['id','price','stock','title','reviews','category','createdAt','updatedAt']
+      order:{createdAt:'DESC'},
+      select: ['id', 'price', 'stock', 'title', 'reviews', 'category', 'createdAt', 'updatedAt']
     })
 
     const lastPage = Math.ceil(total/items_per_page)
