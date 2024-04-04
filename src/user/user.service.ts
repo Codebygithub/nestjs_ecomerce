@@ -7,7 +7,7 @@ import { signupDto } from './dto/user-signup.dto';
 import {hash} from'bcrypt'
 import{compare} from 'bcrypt'
 import { signinDto } from './dto/user-signin.dto';
-import { match } from 'assert';
+import { match, throws } from 'assert';
 import { sign } from 'jsonwebtoken';
 import { Response } from 'express';
 import { FilterUserDto } from './dto/filter-user.dto';
@@ -18,13 +18,16 @@ import * as jwt from 'jsonwebtoken';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import * as nodemailer from 'nodemailer';
 import { EmailService } from 'src/email/email.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 
 
 @Injectable()
 export class UserService {
   constructor(@InjectRepository(UserEntity) private userRepository:Repository<UserEntity>,
-              private readonly emailService:EmailService
+              private readonly emailService:EmailService,
+              @InjectQueue('user') private readonly userQueue:Queue
               
   
   ){}
@@ -39,8 +42,9 @@ export class UserService {
     return user ; 
   }
   async createUserByAdmin(createUserDto:createUserDto):Promise<UserEntity>{
-    const hashPassword = bcrypt.hash(createUserDto.password,10)
-    return this.userRepository.save({...createUserDto , password :await hashPassword})
+    const job = await this.userQueue.add('createUserByAdmin',createUserDto,{removeOnComplete:true})
+    const res = await job.finished()
+    return res
   }
   async logOut(res:Response):Promise<void>{
     res.clearCookie('refreshToken')

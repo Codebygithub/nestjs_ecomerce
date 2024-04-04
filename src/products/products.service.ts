@@ -14,6 +14,8 @@ import { OrderService } from 'src/order/order.service';
 import { ReviewEntity } from 'src/review/entities/review.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { min } from 'class-validator';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class ProductsService {
@@ -21,7 +23,7 @@ export class ProductsService {
   private readonly categoryService:CategoriesService,
   private readonly userService:UserService,
   @InjectRepository(CategoryEntity) private readonly categoriesRepository:Repository<CategoryEntity>,
-  @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService
+  @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService,
   ){}
   async create(createProductDto: CreateProductDto,currentUser:UserEntity):Promise<ProductEntity> {
     const category = await this.categoryService.findOne(createProductDto.categoryId)
@@ -31,6 +33,7 @@ export class ProductsService {
     product.addedBy = currentUser
     return await this.productRepository.save(product)
   }
+
 
   async findAll(query:FilterProductDto):Promise<any> {
     const items_per_page = Number(query.item_per_page) || 10;
@@ -48,14 +51,13 @@ export class ProductsService {
 
     }
 
-    if(query.category)
-    {
+    if(query.category) {
       whereConditions.category = query.category
     }
   if(minRating !==0 || maxRating!==0 )
   {
     whereConditions.reviews = {
-      ratings:Between(minRating,maxRating)
+      rating:Between(minRating,maxRating)
     }
   }
 

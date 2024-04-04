@@ -20,6 +20,8 @@ import { DiscountsModule } from './discounts/discounts.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
+import { UserWorker } from './user/user.worker';
+import { PlaylistModule } from './playlist/playlist.module';
 
 
 @Module({
@@ -53,7 +55,8 @@ import * as redisStore from 'cache-manager-redis-store';
       store:redisStore,
       host:'localhost',
       port:6379
-    })
+    }),
+    PlaylistModule
     
   
   ],
@@ -63,7 +66,9 @@ import * as redisStore from 'cache-manager-redis-store';
     useClass:ThrottlerGuard,
     
     
+    
   },
+  UserWorker,
 {
   provide:APP_INTERCEPTOR,
   useClass:CacheInterceptor

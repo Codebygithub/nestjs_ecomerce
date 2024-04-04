@@ -10,19 +10,21 @@ import { PassportModule } from '@nestjs/passport';
 import { SesionSerialize } from './google-serialize';
 import { EmailModule } from 'src/email/email.module';
 import { BullModule } from '@nestjs/bull';
+import { UserWorker } from './user.worker';
+import { CategoriesModule } from 'src/categories/categories.module';
 
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([UserEntity],),
+  imports:[TypeOrmModule.forFeature([UserEntity]),
   CacheModule.register<CacheModuleOptions>({
     isGlobal:true,
     store: typeof(redisStore),
     host: 'localhost',
     port: 6379,
   }),EmailModule,
-  BullModule.registerQueue({
-    name:'send-mail'
+  BullModule.registerQueueAsync({
+    name:'user'
   })
 ],
   controllers: [UserController],
@@ -31,9 +33,9 @@ import { BullModule } from '@nestjs/bull';
     useClass:UserService
   },GoogleStrategy,
   SesionSerialize,
-  CacheInterceptor
-  
+  CacheInterceptor,
+  UserWorker
 ],
-  exports:[UserService]
+  exports:[UserService , UserWorker]
 })
 export class UserModule {}
