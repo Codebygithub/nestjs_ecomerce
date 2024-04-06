@@ -8,7 +8,7 @@ import { Job } from "bull";
 import * as bcrypt from 'bcrypt';
 
 
-Processor('user')
+@Processor('user')
 export class UserWorker {
   
   constructor

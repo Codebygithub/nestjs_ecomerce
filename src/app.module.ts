@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from 'db/data_source';
 import { UserModule } from './user/user.module';
 import { CurrentUserMiddleware } from './utility/middleware/currentUser.middleware';
-import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { ReviewModule } from './review/review.module';
 import { OrderModule } from './order/order.module';
@@ -20,8 +19,8 @@ import { DiscountsModule } from './discounts/discounts.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
-import { UserWorker } from './user/user.worker';
-import { PlaylistModule } from './playlist/playlist.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ContactModule } from './contact/contact.module';
 
 
 @Module({
@@ -56,7 +55,7 @@ import { PlaylistModule } from './playlist/playlist.module';
       host:'localhost',
       port:6379
     }),
-    PlaylistModule
+    ContactModule,
     
   
   ],
@@ -68,7 +67,6 @@ import { PlaylistModule } from './playlist/playlist.module';
     
     
   },
-  UserWorker,
 {
   provide:APP_INTERCEPTOR,
   useClass:CacheInterceptor

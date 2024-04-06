@@ -27,7 +27,6 @@ import { Queue } from 'bull';
 export class UserService {
   constructor(@InjectRepository(UserEntity) private userRepository:Repository<UserEntity>,
               private readonly emailService:EmailService,
-              @InjectQueue('user') private readonly userQueue:Queue
               
   
   ){}
@@ -42,8 +41,8 @@ export class UserService {
     return user ; 
   }
   async createUserByAdmin(createUserDto:createUserDto):Promise<UserEntity>{
-    const job = await this.userQueue.add('createUserByAdmin',createUserDto,{removeOnComplete:true})
-    const res = await job.finished()
+    const hashPassword = bcrypt.hash(createUserDto.password,10)
+    const res = await this.userRepository.save({...createUserDto , password :await hashPassword})
     return res
   }
   async logOut(res:Response):Promise<void>{
