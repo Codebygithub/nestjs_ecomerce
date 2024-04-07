@@ -33,7 +33,7 @@ export class ContactService {
     console.log('counttt ',count)
     
     const maxContactPerDay = +process.env.MAXCONTACTPERDAY
-    if(count > maxContactPerDay) {
+    if(count >= maxContactPerDay) {
       throw new HttpException('Bạn đã gửi quá nhiều liên hệ trong ngày.', HttpStatus.TOO_MANY_REQUESTS);
     }
     const newContact = new ContactEntity()
