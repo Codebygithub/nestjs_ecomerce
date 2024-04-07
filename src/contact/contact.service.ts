@@ -8,6 +8,7 @@ import { UserService } from 'src/user/user.service';
 import { max } from 'class-validator';
 import { log } from 'console';
 import { filterContactDto } from './dto/filter-contact.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class ContactService {
@@ -41,14 +42,26 @@ export class ContactService {
     newContact.userContact = user
     newContact.email = user.email
     newContact.name = user.name 
+    newContact.phone = createContactDto.phone
     newContact.message = createContactDto.message 
+    newContact.createdAt=today
+    newContact.contactCount++
+
 
     const save = await this.contactRepository.save(newContact)
     return save;
 
     
   }
-  async findAll(query:filterContactDto) {
+  async findAll(query:filterContactDto): Promise<{
+    data: ContactEntity[];
+    total: number;
+    currentPage: number;
+    nextPage: number;
+    prevPage: number;
+    lastPage: number;
+}>
+{
     const items_per_page = Number(query.item_per_page) || 10;
     const page = Number(query.page) || 1;
     const skip = (page - 1) * items_per_page;
@@ -81,4 +94,36 @@ export class ContactService {
     }
     
   }
+  async remove(id:number,currentUser:UserEntity):Promise<string> {
+    const contact = await this.findOne(id)
+    if(!contact) throw new NotFoundException()
+    const currentTime = new Date()
+    
+    const sentTime = contact.createdAt
+    const differenceTime = ( currentTime.getTime() - sentTime.getTime()) /(1000*60)
+    if(differenceTime > 3600000 )   
+      throw new BadRequestException('CAN NOT REMOVE CONTACT')
+    if(contact.retrievedAt && (currentTime.getTime() - sentTime.getTime()) / (1000*60) <=60) {
+      contact.contactCount--;
+      await this.contactRepository.save(contact)
+    }
+    else{ 
+      await this.contactRepository.remove(contact)
+    }
+    contact.userContact = currentUser
+    return 'CONTACT HAS BEEN REMOVED'
+
+    
+  }
+  async findOne(id:number){
+    const contact = await this.contactRepository.findOne({
+      where:{id},
+      relations:{userContact:true}
+    })
+    if(!contact) throw new NotFoundException('CONTACT NOT FOUND')
+
+    return contact
+    
+  }
+
 }

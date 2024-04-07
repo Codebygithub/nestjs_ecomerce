@@ -11,14 +11,23 @@ export class ContactEntity {
     @Column()
     email:string;
 
+    @Column({nullable:true})
+    phone:number
+
     @Column()
     message:string
+
+    @Column({default:0})
+    contactCount:number
 
     @CreateDateColumn()
     createdAt:Date
 
     @UpdateDateColumn()
     updatedAt:Date
+
+    @Column({type:'timestamp',nullable:true})
+    retrievedAt:Date
 
     @ManyToOne(()=> UserEntity , (user) => user.contact)
     userContact:UserEntity

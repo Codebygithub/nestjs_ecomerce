@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors, Put } from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -9,6 +9,8 @@ import { AuthorizeRoles } from 'src/utility/decorators/authorize-role.decorator'
 import { ContactEntity } from './contact.entity';
 import { filterContactDto } from './dto/filter-contact.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Controller('contact')
 export class ContactController {
@@ -26,9 +28,34 @@ export class ContactController {
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard, AuthorizeGuard)
   @UseInterceptors(CacheInterceptor)
-  async findAll(@Query() query:filterContactDto) {
+  async findAll(@Query() query:filterContactDto): Promise<{
+    data: ContactEntity[];
+    total: number;
+    currentPage: number;
+    nextPage: number;
+    prevPage: number;
+    lastPage: number;
+}>
+ {
     const res = await this.contactService.findAll(query)
     return res;
   }
+
+  @Get(':id')
+  async findOne(@Param('id') id:string)
+  {
+    const res = await this.contactService.findOne(+id)
+    return res ;
+  }
+
+  @Put(':id') 
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  async removeContact(@Param('id') id:string,@CurrentUser() currentUser:UserEntity):Promise<string> {
+    const res = await this.contactService.remove(+id,currentUser)
+    return res
+  }
+
+
   
 }
