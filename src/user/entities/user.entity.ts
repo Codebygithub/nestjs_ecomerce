@@ -1,7 +1,7 @@
 import { CartEntity } from "src/cart/entities/cart.entity";
 import { CategoryEntity } from "src/categories/entities/category.entity";
 import { ChatEntity } from "src/chat/entities/chat.entity";
-import { ContactEntity } from "src/contact/entities/contact.entity";
+import { ContactEntity } from "src/contact/contact.entity";
 import { DiscountUserEntity } from "src/discounts/entities/discount-user.entity";
 import { DiscountEntity } from "src/discounts/entities/discount.entity";
 import { SavedDiscountEntity } from "src/discounts/entities/save-discount.entity";
