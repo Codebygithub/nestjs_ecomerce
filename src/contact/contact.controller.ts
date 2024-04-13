@@ -42,6 +42,9 @@ export class ContactController {
   }
 
   @Get(':id')
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard)
+  @UseInterceptors(CacheInterceptor)
   async findOne(@Param('id') id:string)
   {
     const res = await this.contactService.findOne(+id)

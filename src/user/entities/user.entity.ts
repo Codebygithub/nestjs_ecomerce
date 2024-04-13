@@ -1,3 +1,4 @@
+import { BlogEntity } from "src/blog/entities/blog.entity";
 import { CartEntity } from "src/cart/entities/cart.entity";
 import { CategoryEntity } from "src/categories/entities/category.entity";
 import { ChatEntity } from "src/chat/entities/chat.entity";
@@ -78,7 +79,9 @@ export class UserEntity {
 
     @OneToMany(()=>ContactEntity , (contact) => contact.userContact)
     contact:ContactEntity[]
-    
+
+    @OneToMany(()=> BlogEntity , (blog) => blog.user)
+    blog:BlogEntity[]
 
     
 

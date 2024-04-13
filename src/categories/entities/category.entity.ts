@@ -1,3 +1,4 @@
+import { BlogEntity } from "src/blog/entities/blog.entity";
 import { ProductEntity } from "src/products/entities/product.entity";
 import { UserEntity } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Timestamp, UpdateDateColumn } from "typeorm";
@@ -25,5 +26,7 @@ export class CategoryEntity {
     @OneToMany(()=>ProductEntity,(prod)=>prod.category)
     products:ProductEntity[]
 
+    @OneToMany(()=>BlogEntity , (blog)=>blog.category)
+    blog:BlogEntity[]
 
 }

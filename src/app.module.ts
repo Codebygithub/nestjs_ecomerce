@@ -21,6 +21,7 @@ import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
 import { CategoriesModule } from './categories/categories.module';
 import { ContactModule } from './contact/contact.module';
+import { BlogModule } from './blog/blog.module';
 
 
 @Module({
@@ -56,6 +57,7 @@ import { ContactModule } from './contact/contact.module';
       port:6379
     }),
     ContactModule,
+    BlogModule,
     
   
   ],
