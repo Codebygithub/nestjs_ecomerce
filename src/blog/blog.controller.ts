@@ -10,14 +10,15 @@ import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { BlogEntity } from './entities/blog.entity';
 import { filterTitleDto } from './dto/filter-title.dto';
+import { ValidTitleGuard } from 'src/utility/guard/ValidTitleGuard.guard';
 
 @Controller('blog')
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
-  @Post()
+  @Post('createBlog')
   @AuthorizeRoles(Roles.USER,Roles.ADMIN)
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard,ValidTitleGuard)
   async create(@Body() createBlogDto: CreateBlogDto , @CurrentUser() currentUser:UserEntity):Promise<BlogEntity> {
       const res = await this.blogService.create(createBlogDto,currentUser);
       return res

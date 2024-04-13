@@ -31,6 +31,13 @@ export class BlogService {
     })
     return blog
   }
+  async titleExists(title: string): Promise<boolean> {
+    const count = await this.blogRepository.createQueryBuilder("blog")
+        .where("blog.title = :title", { title })
+        .getCount();
+    return count > 0;
+}
+
   findAll() {
     return `This action returns all blog`;
   }

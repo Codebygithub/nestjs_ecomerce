@@ -9,5 +9,6 @@ import { CategoriesModule } from 'src/categories/categories.module';
   imports:[TypeOrmModule.forFeature([BlogEntity]) , CategoriesModule],
   controllers: [BlogController],
   providers: [BlogService],
+  exports:[BlogService]
 })
 export class BlogModule {}
