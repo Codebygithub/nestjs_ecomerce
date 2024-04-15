@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Query } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Query } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
@@ -38,13 +38,29 @@ export class BlogService {
     return count > 0;
 }
 
+  async findOne(id:number): Promise<BlogEntity>{
+    try {
+      const blog = await this.blogRepository.findOne({
+        where:{id},
+        relations:{
+          user:true ,
+          category:true
+        }
+        ,
+        select:['comment','id','description','createdAt','updatedAt','user','title','image']
+
+      })
+      if(!blog) throw new NotFoundException('BLOG NOT FOUND')
+      return blog;
+    } catch (error) {
+      console.log('error' + new BadRequestException())
+    }
+  }
   findAll() {
     return `This action returns all blog`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} blog`;
-  }
+  
 
   update(id: number, updateBlogDto: UpdateBlogDto) {
     return `This action updates a #${id} blog`;

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -11,6 +11,7 @@ import { UserEntity } from 'src/user/entities/user.entity';
 import { BlogEntity } from './entities/blog.entity';
 import { filterTitleDto } from './dto/filter-title.dto';
 import { ValidTitleGuard } from 'src/utility/guard/ValidTitleGuard.guard';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('blog')
 export class BlogController {
@@ -35,8 +36,12 @@ export class BlogController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.blogService.findOne(+id);
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  @UseInterceptors(CacheInterceptor)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard,ValidTitleGuard)
+  async findOne(@Param('id') id: string): Promise<BlogEntity> {
+    const res = await this.blogService.findOne(+id);
+    return res
   }
 
   @Patch(':id')
