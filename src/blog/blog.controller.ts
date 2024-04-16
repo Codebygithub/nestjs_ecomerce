@@ -12,6 +12,7 @@ import { BlogEntity } from './entities/blog.entity';
 import { filterTitleDto } from './dto/filter-title.dto';
 import { ValidTitleGuard } from 'src/utility/guard/ValidTitleGuard.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
+import { filterBlogDto } from './dto/filter-blog.dto';
 
 @Controller('blog')
 export class BlogController {
@@ -26,8 +27,10 @@ export class BlogController {
   }
 
   @Get()
-  findAll() {
-    return this.blogService.findAll();
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  findAll(@Query() query:filterBlogDto) {
+    return this.blogService.findAll(query);
   }
   @Get('search')
   async findByTitle(@Query() query:filterTitleDto):Promise<BlogEntity[]> {

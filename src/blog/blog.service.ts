@@ -4,9 +4,10 @@ import { UpdateBlogDto } from './dto/update-blog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/blog.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { filterTitleDto } from './dto/filter-title.dto';
+import { filterBlogDto } from './dto/filter-blog.dto';
 
 @Injectable()
 export class BlogService {
@@ -56,8 +57,32 @@ export class BlogService {
       console.log('error' + new BadRequestException())
     }
   }
-  findAll() {
-    return `This action returns all blog`;
+  async findAll(query:filterBlogDto) {
+    const item_per_page  = query.item_per_page || 10 
+    const page = Number(query.page) || 1 ;
+    const skip = (page - 1 ) * item_per_page 
+    const keyword = query.search || '' 
+    const whereConditions:any = {
+      title:Like(`%${keyword}%`)
+    }
+    const [res,total] = await this.blogRepository.findAndCount({
+      where:whereConditions , 
+      take:item_per_page ,
+      skip,
+      order:{createdAt:'DESC'},
+      select:['category','comment','createdAt','description','id','image','title','updatedAt','user']
+    })
+    const lastPage = Math.ceil(total/item_per_page) 
+    const nextPage = page + 1 > lastPage ? null : page + 1 
+    const prevPage = page - 1 < 1 ? null : page - 1 ;
+    return{ 
+      data:res , 
+      total , 
+      currentPage:page , 
+      nextPage ,
+      lastPage  , 
+      prevPage
+    }
   }
 
   
