@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, Query } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, Query } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
@@ -19,10 +19,18 @@ export class BlogService {
   async create(createBlogDto: CreateBlogDto,currentUser:UserEntity):Promise<BlogEntity> {
     const category = await this.categoryService.findOne(createBlogDto.categoryId)
     if(!category) throw new NotFoundException('CATEGORY NOT FOUND ')
-    const blog = await this.blogRepository.create(createBlogDto)
-    blog.user = currentUser 
-    blog.category = category
-    return  await this.blogRepository.save(blog)
+    const blog  =  this.blogRepository.create({
+      ...createBlogDto ,
+      user:currentUser,
+      category
+    })
+    if(currentUser.id != blog.user.id) throw new ForbiddenException('YOU DONT HAVE PERMISSION TO CREATE A BLOG')
+    try {
+      const save = await this.blogRepository.save(blog)
+      return save
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to save the blog. Please try again.')
+    }
   }
 
   async findByTitle(query:filterTitleDto):Promise<BlogEntity[]> {
@@ -87,8 +95,17 @@ export class BlogService {
 
   
 
-  update(id: number, updateBlogDto: UpdateBlogDto) {
-    return `This action updates a #${id} blog`;
+  async update(id: number, fields:Partial<UpdateBlogDto> , currentUser:UserEntity): Promise<BlogEntity> {
+    const blog = await this.findOne(id)
+    if(!blog) throw new NotFoundException('BLOG NOT FOUND')
+    Object.assign(blog,fields)
+    blog.user = currentUser
+    if(fields.categoryId) {
+      const category = await this.categoryService.findOne(fields.categoryId)
+      blog.category= category;
+    }
+    return await this.blogRepository.save(blog)
+    
   }
 
   remove(id: number) {

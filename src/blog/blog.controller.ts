@@ -48,8 +48,11 @@ export class BlogController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBlogDto: UpdateBlogDto) {
-    return this.blogService.update(+id, updateBlogDto);
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  async update(@Param('id') id: string, @Body() updateBlogDto: UpdateBlogDto,currentUser:UserEntity): Promise<BlogEntity> {
+    const res =  this.blogService.update(+id, updateBlogDto,currentUser);
+    return res
   }
 
   @Delete(':id')
