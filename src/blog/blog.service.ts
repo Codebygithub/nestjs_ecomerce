@@ -4,7 +4,7 @@ import { UpdateBlogDto } from './dto/update-blog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/blog.entity';
-import { Like, Repository } from 'typeorm';
+import { EntityManager, Like, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { filterTitleDto } from './dto/filter-title.dto';
 import { filterBlogDto } from './dto/filter-blog.dto';
@@ -12,25 +12,29 @@ import { filterBlogDto } from './dto/filter-blog.dto';
 @Injectable()
 export class BlogService {
   constructor(@InjectRepository(BlogEntity) private readonly blogRepository:Repository<BlogEntity>,
-                                            private readonly categoryService:CategoriesService
-  ){}
+                                            private readonly categoryService:CategoriesService,
+                                            private readonly entitymanager:EntityManager)
+  {}
 
 
   async create(createBlogDto: CreateBlogDto,currentUser:UserEntity):Promise<BlogEntity> {
     const category = await this.categoryService.findOne(createBlogDto.categoryId)
     if(!category) throw new NotFoundException('CATEGORY NOT FOUND ')
-    const blog  =  this.blogRepository.create({
-      ...createBlogDto ,
-      user:currentUser,
-      category
-    })
-    if(currentUser.id != blog.user.id) throw new ForbiddenException('YOU DONT HAVE PERMISSION TO CREATE A BLOG')
+    if(currentUser.id != category.addedBy.id) throw new ForbiddenException('YOU DONT HAVE PERMISSION TO CREATE A BLOG')
     try {
-      const save = await this.blogRepository.save(blog)
-      return save
+      return this.entitymanager.transaction(async entityManager => {
+        const blog = await this.entitymanager.create(BlogEntity,{
+          ...createBlogDto,
+          user:currentUser ,
+          category
+        })
+        const saved = await entityManager.save(blog)
+        return saved
+      })
     } catch (error) {
-      throw new InternalServerErrorException('Failed to save the blog. Please try again.')
+      throw new InternalServerErrorException('FAILED TO SAVED THE BLOG , PLEASE TRY AGAIN ')
     }
+  
   }
 
   async findByTitle(query:filterTitleDto):Promise<BlogEntity[]> {
@@ -68,6 +72,7 @@ export class BlogService {
   async findAll(query:filterBlogDto) {
     const item_per_page  = query.item_per_page || 10 
     const page = Number(query.page) || 1 ;
+    if(query.item_per_page <= 0  || page <= 0  ) throw new BadRequestException('Invalid page or item_per_page value.') 
     const skip = (page - 1 ) * item_per_page 
     const keyword = query.search || '' 
     const whereConditions:any = {
@@ -92,6 +97,29 @@ export class BlogService {
       prevPage
     }
   }
+  async PopularTopic():Promise<{topic:string , count:number}[]> {
+    const blogs = await this.blogRepository.find({
+      relations:{user:true , topics:true , category:true}
+    })
+    if(!blogs) throw new NotFoundException('NOT FOUND')
+      const topicCounts: Record<string, number> = {};
+    for(const blog of blogs) {
+      for(const topic of blog.topics) {
+        if(topic.name in topicCounts) {
+          topicCounts[topic.name] +=1
+
+        }
+        else {
+          topicCounts[topic.name] = 1 
+        }
+      }
+    }
+    const PopularTopics = Object.keys(topicCounts).map((topic)=>({
+      topic,
+      count:topicCounts[topic]
+    }))
+    return PopularTopics.sort((a,b) =>b.count - a.count)
+  }
 
   
 
@@ -108,7 +136,10 @@ export class BlogService {
     
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} blog`;
+  async remove(id:number , currentUser:UserEntity):Promise<BlogEntity> {
+    const blog = await this.findOne(id)
+    if(!blog) throw new NotFoundException('NOT FOUND')
+    if(currentUser.id != blog.user.id) throw new ForbiddenException()
+    return await this.blogRepository.remove(blog)
   }
 }

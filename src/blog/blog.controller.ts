@@ -54,9 +54,14 @@ export class BlogController {
     const res =  this.blogService.update(+id, updateBlogDto,currentUser);
     return res
   }
-
+  @Get('topic')
+  async PopularTopic(){
+    const res =  await this.blogService.PopularTopic()
+    return res ;
+  }
+q
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.blogService.remove(+id);
+  async remove(@Param('id') id: string , @CurrentUser() currentUser:UserEntity):Promise<BlogEntity> {
+    return this.blogService.remove(+id,currentUser);
   }
 }

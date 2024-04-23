@@ -1,6 +1,7 @@
 import { CategoryEntity } from "src/categories/entities/category.entity";
 import { UserEntity } from "src/user/entities/user.entity";
-import { Column, CreateDateColumn, Entity, Index, ManyToMany, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { topicBlogEntity } from "./topic-blog.entity";
 
 @Entity()
 export class BlogEntity {
@@ -29,6 +30,7 @@ export class BlogEntity {
     @ManyToOne(()=>CategoryEntity , (cat) =>cat.blog)
     category:CategoryEntity
 
-
+    @OneToMany(()=>topicBlogEntity , (tb) => tb.blog)
+    topics:topicBlogEntity[]
     
 }
