@@ -1,6 +1,7 @@
 // email.service.ts
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { CreateBlogDto } from 'src/blog/dto/create-blog.dto';
 
 @Injectable()
 export class EmailService {
@@ -41,4 +42,20 @@ export class EmailService {
       console.error(`Error sending confirmation email to ${email}: ${error.message}`);
     }
   }
+  async sendEmailBlog(email: string,createBlogDto:CreateBlogDto): Promise<void> {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM, // Địa chỉ email gửi
+      to: email, // Địa chỉ email nhận
+      subject: 'New Blog Created', // Tiêu đề email
+      html: `A new blog title ${createBlogDto.title} has been created `, // Nội dung email
+    };
+    console.log(mailOptions)
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Email confirmation sent to ${email}`);
+    } catch (error) {
+      console.error(`Error sending confirmation email to ${email}: ${error.message}`);
+    }
+  }
+  
 }

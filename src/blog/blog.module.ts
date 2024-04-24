@@ -6,11 +6,19 @@ import { BlogEntity } from './entities/blog.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { UserModule } from 'src/user/user.module';
 import { topicBlogEntity } from './entities/topic-blog.entity';
+import { EmailService } from 'src/email/email.service';
+import { emailBlogWorker } from './email-blog.worker';
+import { QueueService } from './email-blog.service';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([BlogEntity,topicBlogEntity]) , CategoriesModule, UserModule],
+  imports:[TypeOrmModule.forFeature([BlogEntity,topicBlogEntity]) , CategoriesModule, UserModule,
+  BullModule.registerQueueAsync({
+    name:'email-blog'
+  }),
+],
   controllers: [BlogController],
-  providers: [BlogService],
+  providers: [BlogService,EmailService,emailBlogWorker,QueueService],
   exports:[BlogService]
 })
 export class BlogModule {}

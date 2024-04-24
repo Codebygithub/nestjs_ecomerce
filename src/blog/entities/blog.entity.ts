@@ -12,7 +12,7 @@ export class BlogEntity {
     title:string; 
     @Column()
     description:string;
-    @Column()
+    @Column({nullable:true})
     comment:string;
 
     @Column('simple-array')

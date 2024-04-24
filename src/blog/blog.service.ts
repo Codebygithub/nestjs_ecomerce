@@ -8,19 +8,23 @@ import { EntityManager, Like, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { filterTitleDto } from './dto/filter-title.dto';
 import { filterBlogDto } from './dto/filter-blog.dto';
+import { EmailService } from 'src/email/email.service';
+import { QueueService } from './email-blog.service';
 
 @Injectable()
 export class BlogService {
   constructor(@InjectRepository(BlogEntity) private readonly blogRepository:Repository<BlogEntity>,
                                             private readonly categoryService:CategoriesService,
-                                            private readonly entitymanager:EntityManager)
+                                            private readonly entitymanager:EntityManager,
+                                            private readonly emailService:EmailService,
+                                            private queueService:QueueService
+                                          )
   {}
 
 
   async create(createBlogDto: CreateBlogDto,currentUser:UserEntity):Promise<BlogEntity> {
     const category = await this.categoryService.findOne(createBlogDto.categoryId)
     if(!category) throw new NotFoundException('CATEGORY NOT FOUND ')
-    if(currentUser.id != category.addedBy.id) throw new ForbiddenException('YOU DONT HAVE PERMISSION TO CREATE A BLOG')
     try {
       return this.entitymanager.transaction(async entityManager => {
         const blog = await this.entitymanager.create(BlogEntity,{
@@ -28,6 +32,7 @@ export class BlogService {
           user:currentUser ,
           category
         })
+        await this.queueService.sendEmailNotification(createBlogDto,currentUser) 
         const saved = await entityManager.save(blog)
         return saved
       })
@@ -102,7 +107,7 @@ export class BlogService {
       relations:{user:true , topics:true , category:true}
     })
     if(!blogs) throw new NotFoundException('NOT FOUND')
-      const topicCounts: Record<string, number> = {};
+    const topicCounts: Record<string, number> = {};
     for(const blog of blogs) {
       for(const topic of blog.topics) {
         if(topic.name in topicCounts) {

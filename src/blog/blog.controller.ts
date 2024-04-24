@@ -61,6 +61,8 @@ export class BlogController {
   }
 q
   @Delete(':id')
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
   async remove(@Param('id') id: string , @CurrentUser() currentUser:UserEntity):Promise<BlogEntity> {
     return this.blogService.remove(+id,currentUser);
   }
