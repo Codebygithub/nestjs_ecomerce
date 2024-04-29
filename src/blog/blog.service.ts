@@ -10,6 +10,9 @@ import { filterTitleDto } from './dto/filter-title.dto';
 import { filterBlogDto } from './dto/filter-blog.dto';
 import { EmailService } from 'src/email/email.service';
 import { QueueService } from './email-blog.service';
+import { UserService } from 'src/user/user.service';
+import { use } from 'passport';
+import { throws } from 'assert';
 
 @Injectable()
 export class BlogService {
@@ -17,6 +20,7 @@ export class BlogService {
                                             private readonly categoryService:CategoriesService,
                                             private readonly entitymanager:EntityManager,
                                             private readonly emailService:EmailService,
+                                            private readonly userService:UserService,
                                             private queueService:QueueService
                                           )
   {}
@@ -41,6 +45,17 @@ export class BlogService {
     }
   
   }
+  async getViewBlogByUser(userId:number,blogId:number):Promise<BlogEntity[]> {
+    const user = await this.userService.findOne(userId)
+    console.log('user',user)
+    if(!user) throw new NotFoundException('USER NOT FOUND')
+    const blog = await this.findOne(blogId)
+    if(!blog) throw new NotFoundException('BLOG NOT FOUND')
+    console.log('blog' , blog)
+    blog.user = user
+    return  user.blog
+    
+  }
 
   async findByTitle(query:filterTitleDto):Promise<BlogEntity[]> {
     const title = query.title
@@ -57,22 +72,31 @@ export class BlogService {
 }
 
   async findOne(id:number): Promise<BlogEntity>{
-    try {
-      const blog = await this.blogRepository.findOne({
-        where:{id},
-        relations:{
-          user:true ,
-          category:true
+    const blog = await this.blogRepository.findOne({
+      where: { id: id },
+      relations: {
+          user: true,
+          category: true
+      },
+      select: {
+        user: {
+          id:true,
+          name:true,
+          email:true
+        },
+        category:{
+          id:true ,
+          title:true
+          
         }
-        ,
-        select:['comment','id','description','createdAt','updatedAt','user','title','image']
+      }
+  });
 
-      })
-      if(!blog) throw new NotFoundException('BLOG NOT FOUND')
-      return blog;
-    } catch (error) {
-      console.log('error' + new BadRequestException())
-    }
+  if (!blog) {
+      throw new NotFoundException('BLOG NOT FOUND');
+  }
+
+  return blog;
   }
   async findAll(query:filterBlogDto) {
     const item_per_page  = query.item_per_page || 10 
@@ -88,7 +112,7 @@ export class BlogService {
       take:item_per_page ,
       skip,
       order:{createdAt:'DESC'},
-      select:['category','comment','createdAt','description','id','image','title','updatedAt','user']
+      select:['category',,'createdAt','description','id','image','title','updatedAt','user']
     })
     const lastPage = Math.ceil(total/item_per_page) 
     const nextPage = page + 1 > lastPage ? null : page + 1 
@@ -102,29 +126,13 @@ export class BlogService {
       prevPage
     }
   }
-  async PopularTopic():Promise<{topic:string , count:number}[]> {
-    const blogs = await this.blogRepository.find({
-      relations:{user:true , topics:true , category:true}
-    })
-    if(!blogs) throw new NotFoundException('NOT FOUND')
-    const topicCounts: Record<string, number> = {};
-    for(const blog of blogs) {
-      for(const topic of blog.topics) {
-        if(topic.name in topicCounts) {
-          topicCounts[topic.name] +=1
 
-        }
-        else {
-          topicCounts[topic.name] = 1 
-        }
-      }
-    }
-    const PopularTopics = Object.keys(topicCounts).map((topic)=>({
-      topic,
-      count:topicCounts[topic]
-    }))
-    return PopularTopics.sort((a,b) =>b.count - a.count)
-  }
+  
+
+
+
+
+
 
   
 

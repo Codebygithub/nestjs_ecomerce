@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors,Header } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -13,6 +13,7 @@ import { filterTitleDto } from './dto/filter-title.dto';
 import { ValidTitleGuard } from 'src/utility/guard/ValidTitleGuard.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { filterBlogDto } from './dto/filter-blog.dto';
+import { Request, Response } from 'express';
 
 @Controller('blog')
 export class BlogController {
@@ -33,6 +34,7 @@ export class BlogController {
     return this.blogService.findAll(query);
   }
   @Get('search')
+  @UseInterceptors(CacheInterceptor)
   async findByTitle(@Query() query:filterTitleDto):Promise<BlogEntity[]> {
     const res = await this.blogService.findByTitle(query)
     return res
@@ -41,7 +43,7 @@ export class BlogController {
   @Get(':id')
   @AuthorizeRoles(Roles.USER,Roles.ADMIN)
   @UseInterceptors(CacheInterceptor)
-  @UseGuards(AuthenticationGuard,AuthorizeGuard,ValidTitleGuard)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
   async findOne(@Param('id') id: string): Promise<BlogEntity> {
     const res = await this.blogService.findOne(+id);
     return res
@@ -54,12 +56,19 @@ export class BlogController {
     const res =  this.blogService.update(+id, updateBlogDto,currentUser);
     return res
   }
-  @Get('topic')
-  async PopularTopic(){
-    const res =  await this.blogService.PopularTopic()
-    return res ;
-  }
-q
+
+ @Get(':userId/viewed-blog/:blogId')
+ @Header('Cache-Control','max-age=3600')
+ @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+ @UseInterceptors(CacheInterceptor)
+ @UseGuards(AuthenticationGuard,AuthorizeGuard)
+ async getViewBlogByUser(@Param('userId') userId:string,@Param('blogId') blogId:string):Promise<BlogEntity[]> {
+  const viewBlog = await this.blogService.getViewBlogByUser(+userId , +blogId)
+  console.log('view blog' , viewBlog)
+  return viewBlog
+ }
+
+
   @Delete(':id')
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
   @AuthorizeRoles(Roles.USER,Roles.ADMIN)

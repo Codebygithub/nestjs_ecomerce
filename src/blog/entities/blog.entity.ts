@@ -2,6 +2,7 @@ import { CategoryEntity } from "src/categories/entities/category.entity";
 import { UserEntity } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, Index, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { topicBlogEntity } from "./topic-blog.entity";
+import { CommentEntity } from "src/comment-blog/entities/comment-blog.entity";
 
 @Entity()
 export class BlogEntity {
@@ -12,9 +13,7 @@ export class BlogEntity {
     title:string; 
     @Column()
     description:string;
-    @Column({nullable:true})
-    comment:string;
-
+    
     @Column('simple-array')
     image:string[]
     
@@ -32,5 +31,10 @@ export class BlogEntity {
 
     @OneToMany(()=>topicBlogEntity , (tb) => tb.blog)
     topics:topicBlogEntity[]
+
+    @OneToMany(()=>CommentEntity , (cmt) => cmt.blog)
+    comments : CommentEntity[];
+
+   
     
 }

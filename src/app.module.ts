@@ -22,6 +22,7 @@ import * as redisStore from 'cache-manager-redis-store';
 import { CategoriesModule } from './categories/categories.module';
 import { ContactModule } from './contact/contact.module';
 import { BlogModule } from './blog/blog.module';
+import { CommentBlogModule } from './comment-blog/comment-blog.module';
 
 
 @Module({
@@ -58,6 +59,7 @@ import { BlogModule } from './blog/blog.module';
     }),
     ContactModule,
     BlogModule,
+    CommentBlogModule,
     
   
   ],
