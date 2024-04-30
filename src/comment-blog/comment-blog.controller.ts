@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, BadRequestException, UsePipes, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { CommentBlogService } from './comment-blog.service';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
@@ -8,7 +8,9 @@ import { AuthenticationGuard } from 'src/utility/guard/authentication.guard';
 import { AuthorizeGuard } from 'src/utility/guard/authorization.guard';
 import { filterCommentBlogDto } from './dto/filter-comment-blog.dto';
 import { CommentEntity } from './entities/comment-blog.entity';
-import { createReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
+import { CreateReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
+import { GetIntParam } from 'src/utility/decorators/getParamInt.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Controller('comment-blog')
 export class CommentBlogController {
@@ -22,31 +24,19 @@ export class CommentBlogController {
     return res
     
   }
+  @Post('comments/:commentId/:userId/:blogId/replies')
+  async replyComment(@Param('commentId') commentId:string  ,@Param('userId') userId:string ,@Param('blogId') blogId:string ,@Body() createReplyCommentBlogDto:CreateReplyCommentBlogDto , currentUser:UserEntity) {
+    const res = await this.commentBlogService.replyComment(+commentId ,+userId,+blogId, createReplyCommentBlogDto,currentUser)
+    return res
+  }
 
   @Get('get-comment')
   async findAll(@Query() filterCommentBlogDto:filterCommentBlogDto ):Promise<CommentEntity[]> {
     const res =await  this.commentBlogService.getComment(filterCommentBlogDto);
     return res
   }
-  @Post(':commentId/reply')
-  @AuthorizeRoles(Roles.USER, Roles.ADMIN)
-  @UseGuards(AuthenticationGuard, AuthorizeGuard)
-  async replyToComment(
-    @Param('commentId') commentId: string,
-    @Body() CreateReplyCommentBlogDto: createReplyCommentBlogDto
-  ): Promise<CommentEntity | undefined> {
-    // Attempt to convert commentId to a number
-    console.log('commentID' , commentId)
-    const numericCommentId = parseInt(commentId);
-  
-    if (isNaN(numericCommentId)) {
-      // Handle invalid commentId (e.g., return an error response)
-      throw new Error('Invalid comment ID: Please provide a valid number.');
-    }
-  
-    const res = await this.commentBlogService.replyToComment(numericCommentId, CreateReplyCommentBlogDto);
-    return res;
-  }
+
+
 
   @Get(':id')
   async findOne(@Param('id') id: string):Promise<CommentEntity> {

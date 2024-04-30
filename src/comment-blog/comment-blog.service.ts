@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Post } from '@nestjs/common';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
 import { Repository } from 'typeorm';
@@ -8,7 +8,8 @@ import { BlogService } from 'src/blog/blog.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { filterCommentBlogDto } from './dto/filter-comment-blog.dto';
 import { Like } from 'typeorm';
-import { createReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
+import { CreateReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class CommentBlogService {
@@ -56,14 +57,47 @@ export class CommentBlogService {
     return await query.getMany()
     
   }
-  async replyToComment(commentId:number ,CreateReplyCommentBlogDto:createReplyCommentBlogDto):Promise<CommentEntity> {
-    const comment = await this.findOne(commentId)
-    if(!comment) throw new NotFoundException()
+  async replyComment(commentId:number , userId:number , blogId:number , createReplyCommentBlogDto:CreateReplyCommentBlogDto,currentUser:UserEntity) {
+    const {content} = createReplyCommentBlogDto
+    const user = await this.userService.findOne(userId)
+    if(!user) throw new NotFoundException()
+    const blog = await this.blogService.findOne(blogId)
+    if(!blog) throw new NotFoundException()
+    const comment = await this.commentBlogRepository.findOne({
+      where:{id:commentId},
+      relations:{replies:true}
+    })
+    if(!comment) throw new NotFoundException("COMMENT NOT FOUND")
     const reply = new CommentEntity()
-    reply.content=CreateReplyCommentBlogDto.content
+    reply.content = content
+    reply.user=user 
+    reply.blog=blog
     reply.parentComment = comment
-    return this.commentBlogRepository.save(reply)
+    comment.replies.push(reply)
+    const save = await this.commentBlogRepository.save(reply)
+    return save
+    
 
+    
+  }
+
+
+  async findUserAndBlog(blogId:number , userId:number){
+    return await this.commentBlogRepository.findOne({
+      where:{
+        user:{
+          id:userId
+        },
+        blog:{
+          id:blogId
+        }
+      },
+      relations:{
+        user:true,
+        blog:true
+      }
+      
+    })
   }
 
   async findOne(id: number):Promise<CommentEntity> {
