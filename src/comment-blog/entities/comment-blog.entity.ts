@@ -11,6 +11,9 @@ export class CommentEntity {
     @Column()
     content: string;
 
+    @Column({default:0})
+    updateCount:number
+
     @CreateDateColumn()
     createdAt: Date;
 

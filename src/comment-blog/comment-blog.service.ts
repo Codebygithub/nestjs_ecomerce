@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, Post } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
 import { Repository } from 'typeorm';
@@ -76,9 +76,6 @@ export class CommentBlogService {
     comment.replies.push(reply)
     const save = await this.commentBlogRepository.save(reply)
     return save
-    
-
-    
   }
 
 
@@ -111,8 +108,25 @@ export class CommentBlogService {
     return comment
   }
 
-  update(id: number, updateCommentBlogDto: UpdateCommentBlogDto) {
-    return `This action updates a #${id} commentBlog`;
+  async update(id: number, updateCommentBlogDto: UpdateCommentBlogDto,currentUser:UserEntity) {
+    const {content} = updateCommentBlogDto
+   const comment = await this.commentBlogRepository.findOne({
+    where:{id},
+    relations:{user:true,blog:true}
+   })
+   if(!comment) throw new NotFoundException('COMMENT NOT FOUND')
+   if(currentUser.id != comment.user.id){
+    throw new UnauthorizedException("You Don't Have Permission To Perform This Action")
+   }
+   if(comment.updateCount>=3){
+    throw new ForbiddenException("YOU HAVE EXCEED THE MAXIMUM ALLOWED UPDATES FOR THIS COMMENT")
+   }
+   comment.content = content
+   comment.updateCount++
+   const save = await this.commentBlogRepository.save(comment)
+   return save
+
+
   }
 
   remove(id: number) {
