@@ -55,7 +55,10 @@ export class CommentBlogController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentBlogService.remove(+id);
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  async remove(@Param('id') id: string,@CurrentUser() currentUser:UserEntity) {
+    const res = await this.commentBlogService.deleteComment(+id,currentUser);
+    return res
   }
 }

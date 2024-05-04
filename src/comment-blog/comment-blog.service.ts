@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Post, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
 import { Repository } from 'typeorm';
@@ -16,6 +16,7 @@ import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
 export class CommentBlogService {
   constructor(
               @InjectRepository(CommentEntity) private readonly commentBlogRepository:Repository<CommentEntity>,
+              @InjectRepository(EditHistoryEntity) private readonly EditRepo:Repository<EditHistoryEntity>,
               private readonly userService:UserService ,
               private readonly blogService:BlogService
   ){}
@@ -133,7 +134,7 @@ export class CommentBlogService {
    } else {
        comment.editHistory = [newEditHistoryComment, ...comment.editHistory.slice(0, 9)];
    }
-
+   await this.EditRepo.save(newEditHistoryComment)
    comment.content = content
    comment.updateCount++
    const save = await this.commentBlogRepository.save(comment)
@@ -143,7 +144,27 @@ export class CommentBlogService {
   }
   
 
-  remove(id: number) {
-    return `This action removes a #${id} commentBlog`;
+  async deleteComment(commentId: number,currentUser:UserEntity): Promise<void> {
+    // Tìm bình luận
+    const comment = await this.commentBlogRepository.findOne({
+      where:{id:commentId} ,
+      relations:{editHistory:true,user:true}
+    })
+    
+
+    if (!comment) {
+      throw new Error('Không tìm thấy bình luận');
+    }
+    console.log('comment edit' , comment.editHistory)
+    // Nếu có lịch sử chỉnh sửa, xóa chúng
+    if (comment.editHistory && comment.editHistory.length > 0) {
+      for (const editHistory of comment.editHistory) {
+        await this.EditRepo.delete(editHistory.id);
+      }
+    }
+    
+
+    // Xóa bình luận  
+    await this.commentBlogRepository.remove(comment);
   }
 }
