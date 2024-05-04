@@ -13,10 +13,11 @@ import { EmailService } from 'src/email/email.service';
 import { CategoriesService } from 'src/categories/categories.service';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { QueueService } from 'src/blog/email-blog.service';
+import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CommentEntity, BlogEntity, UserEntity]),
+    TypeOrmModule.forFeature([CommentEntity, BlogEntity, UserEntity,EditHistoryEntity]),
     BlogModule,
     UserModule ,
     CategoriesModule

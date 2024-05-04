@@ -10,6 +10,7 @@ import { filterCommentBlogDto } from './dto/filter-comment-blog.dto';
 import { Like } from 'typeorm';
 import { CreateReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
+import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
 
 @Injectable()
 export class CommentBlogService {
@@ -112,7 +113,7 @@ export class CommentBlogService {
     const {content} = updateCommentBlogDto
    const comment = await this.commentBlogRepository.findOne({
     where:{id},
-    relations:{user:true,blog:true}
+    relations:{user:true,blog:true,editHistory:true}
    })
    if(!comment) throw new NotFoundException('COMMENT NOT FOUND')
    if(currentUser.id != comment.user.id){
@@ -121,6 +122,18 @@ export class CommentBlogService {
    if(comment.updateCount>=3){
     throw new ForbiddenException("YOU HAVE EXCEED THE MAXIMUM ALLOWED UPDATES FOR THIS COMMENT")
    }
+   const newEditHistoryComment = new EditHistoryEntity();
+   newEditHistoryComment.editedBy = currentUser.name;
+   newEditHistoryComment.editedAt = new Date();
+   newEditHistoryComment.previousContent = comment.content;
+   newEditHistoryComment.newContent = content;
+
+   if (!comment.editHistory) {
+       comment.editHistory = [newEditHistoryComment];
+   } else {
+       comment.editHistory = [newEditHistoryComment, ...comment.editHistory.slice(0, 9)];
+   }
+
    comment.content = content
    comment.updateCount++
    const save = await this.commentBlogRepository.save(comment)
@@ -128,6 +141,7 @@ export class CommentBlogService {
 
 
   }
+  
 
   remove(id: number) {
     return `This action removes a #${id} commentBlog`;

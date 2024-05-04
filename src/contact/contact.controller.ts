@@ -6,7 +6,7 @@ import { Roles } from 'src/utility/common/user-role.enum';
 import { AuthorizeGuard } from 'src/utility/guard/authorization.guard';
 import { AuthenticationGuard } from 'src/utility/guard/authentication.guard';
 import { AuthorizeRoles } from 'src/utility/decorators/authorize-role.decorator';
-import { ContactEntity } from './contact.entity';
+import { ContactEntity } from './entities/contact.entity';
 import { filterContactDto } from './dto/filter-contact.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';

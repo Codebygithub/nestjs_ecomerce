@@ -2,6 +2,7 @@
 import { BlogEntity } from "src/blog/entities/blog.entity";
 import { UserEntity } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { EditHistoryEntity } from "./editHistoryComment-blog.entity";
 
 @Entity()
 export class CommentEntity {
@@ -31,4 +32,7 @@ export class CommentEntity {
 
     @OneToMany(() => CommentEntity, (comment) => comment.parentComment)
     replies: CommentEntity[];
+
+    @OneToMany(type => EditHistoryEntity, editHistory => editHistory.comment, { cascade: true })
+    editHistory: EditHistoryEntity[]; 
 }

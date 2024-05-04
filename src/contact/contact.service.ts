@@ -2,7 +2,7 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundExc
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ContactEntity } from './contact.entity';
+import { ContactEntity } from './entities/contact.entity';
 import { Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { max } from 'class-validator';
