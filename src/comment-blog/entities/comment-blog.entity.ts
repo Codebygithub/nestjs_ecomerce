@@ -1,7 +1,7 @@
 
 import { BlogEntity } from "src/blog/entities/blog.entity";
 import { UserEntity } from "src/user/entities/user.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn, OneToMany, Index } from "typeorm";
 import { EditHistoryEntity } from "./editHistoryComment-blog.entity";
 
 @Entity()
@@ -16,6 +16,7 @@ export class CommentEntity {
     updateCount:number
 
     @CreateDateColumn()
+    @Index()
     createdAt: Date;
 
     @UpdateDateColumn()

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, BadRequestException, UsePipes, ValidationPipe, ParseIntPipe, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, BadRequestException, UsePipes, ValidationPipe, ParseIntPipe, Put, UseInterceptors } from '@nestjs/common';
 import { CommentBlogService } from './comment-blog.service';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
@@ -12,6 +12,7 @@ import { CreateReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
 import { GetIntParam } from 'src/utility/decorators/getParamInt.decorator';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { CurrentUser } from 'src/utility/decorators/currentUser.decorator';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('comment-blog')
 export class CommentBlogController {
@@ -19,7 +20,7 @@ export class CommentBlogController {
 
   @Post(':blogId/:userId')
   @AuthorizeRoles(Roles.USER,Roles.ADMIN)
-  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)  
   async create(@Body() createCommentBlogDto: CreateCommentBlogDto , @Param('blogId') blogId:string , @Param('userId') userId:string ) {
     const res = await this.commentBlogService.createCommentBlog(createCommentBlogDto , +blogId,+userId)
     return res
@@ -32,6 +33,9 @@ export class CommentBlogController {
   }
 
   @Get('get-comment')
+  @AuthorizeRoles(Roles.USER,Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)  
+  @UseInterceptors(CacheInterceptor)
   async findAll(@Query() filterCommentBlogDto:filterCommentBlogDto ):Promise<CommentEntity[]> {
     const res =await  this.commentBlogService.getComment(filterCommentBlogDto);
     return res

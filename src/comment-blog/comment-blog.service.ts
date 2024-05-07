@@ -11,6 +11,8 @@ import { Like } from 'typeorm';
 import { CreateReplyCommentBlogDto } from './dto/create-replyCommentBlog.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class CommentBlogService {
@@ -18,7 +20,8 @@ export class CommentBlogService {
               @InjectRepository(CommentEntity) private readonly commentBlogRepository:Repository<CommentEntity>,
               @InjectRepository(EditHistoryEntity) private readonly EditRepo:Repository<EditHistoryEntity>,
               private readonly userService:UserService ,
-              private readonly blogService:BlogService
+              private readonly blogService:BlogService,
+              @Inject(CACHE_MANAGER) private cacheManager:Cache 
   ){}
 
   async createCommentBlog(createCommentBlogDto: CreateCommentBlogDto,blogId:number,userId:number) {
@@ -42,6 +45,11 @@ export class CommentBlogService {
     const page = Number(filterCommentBlogDto.page) || 1;
     const skip = (page - 1) * items_per_page;
     const keyword = filterCommentBlogDto.keyword || '';
+    const cacheKey = `comments:${keyword}:${page}`;
+    const cachedComments = await this.cacheManager.get(cacheKey);
+    if(cachedComments) {
+      return JSON.parse(cachedComments as string)
+    }
     let query = await this.commentBlogRepository.createQueryBuilder('comment')
     .leftJoinAndSelect('comment.user', 'user')
     .leftJoinAndSelect('comment.blog', 'blog')
@@ -49,14 +57,17 @@ export class CommentBlogService {
     .where('comment.parentComment IS NULL') // Chỉ lấy các comment không phải là replies
     .orderBy('comment.createdAt', 'DESC')
     .skip(skip)
-    .take(items_per_page);
+    .take(items_per_page)
+    // .select(['comment.id', 'comment.content', 'comment.createdAt', 'user.username', 'blog.title'])
     if(keyword)
       {
         query = query.where('comment.content Like :keyword',{keyword:`%${keyword}%`});
 
       }
 
-    return await query.getMany()
+    const comments =  await query.getMany()
+    await this.cacheManager.set(cacheKey,JSON.stringify(comments),3600)
+    return comments
     
   }
   async replyComment(commentId:number , userId:number , blogId:number , createReplyCommentBlogDto:CreateReplyCommentBlogDto,currentUser:UserEntity) {
@@ -162,6 +173,8 @@ export class CommentBlogService {
         await this.EditRepo.delete(editHistory.id);
       }
     }
+
+    comment.user = currentUser
     
 
     // Xóa bình luận  
