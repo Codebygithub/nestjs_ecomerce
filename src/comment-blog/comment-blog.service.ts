@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateCommentBlogDto } from './dto/create-comment-blog.dto';
 import { UpdateCommentBlogDto } from './dto/update-comment-blog.dto';
-import { Repository } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 import { CommentEntity } from './entities/comment-blog.entity';
 import { UserService } from 'src/user/user.service';
 import { BlogService } from 'src/blog/blog.service';
@@ -13,6 +13,7 @@ import { UserEntity } from 'src/user/entities/user.entity';
 import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { query } from 'express';
 
 @Injectable()
 export class CommentBlogService {
@@ -21,7 +22,8 @@ export class CommentBlogService {
               @InjectRepository(EditHistoryEntity) private readonly EditRepo:Repository<EditHistoryEntity>,
               private readonly userService:UserService ,
               private readonly blogService:BlogService,
-              @Inject(CACHE_MANAGER) private cacheManager:Cache 
+              @Inject(CACHE_MANAGER) private cacheManager:Cache ,
+              private readonly connection:Connection
   ){}
 
   async createCommentBlog(createCommentBlogDto: CreateCommentBlogDto,blogId:number,userId:number) {
@@ -121,36 +123,59 @@ export class CommentBlogService {
     return comment
   }
 
+  
   async update(id: number, updateCommentBlogDto: UpdateCommentBlogDto,currentUser:UserEntity) {
-    const {content} = updateCommentBlogDto
-   const comment = await this.commentBlogRepository.findOne({
-    where:{id},
-    relations:{user:true,blog:true,editHistory:true}
-   })
-   if(!comment) throw new NotFoundException('COMMENT NOT FOUND')
-   if(currentUser.id != comment.user.id){
-    throw new UnauthorizedException("You Don't Have Permission To Perform This Action")
-   }
-   if(comment.updateCount>=3){
-    throw new ForbiddenException("YOU HAVE EXCEED THE MAXIMUM ALLOWED UPDATES FOR THIS COMMENT")
-   }
-   const newEditHistoryComment = new EditHistoryEntity();
-   newEditHistoryComment.editedBy = currentUser.name;
-   newEditHistoryComment.editedAt = new Date();
-   newEditHistoryComment.previousContent = comment.content;
-   newEditHistoryComment.newContent = content;
+    const {content}  = updateCommentBlogDto
+    const queryRunner = this.connection.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
+    try {
+      const comment = await queryRunner.manager.findOne(CommentEntity,{
+        where : {id},
+        relations:{user:true , blog:true , editHistory:true}
+      });
+      if(!comment)
+        {
+          queryRunner.rollbackTransaction()
+          throw new NotFoundException('COMMENT NOT FOUND')
+        }
+        if (currentUser.id !== comment.user.id) {
+          await queryRunner.rollbackTransaction();
+          throw new UnauthorizedException("You Don't Have Permission To Perform This Action");
+      }
 
-   if (!comment.editHistory) {
-       comment.editHistory = [newEditHistoryComment];
-   } else {
-       comment.editHistory = [newEditHistoryComment, ...comment.editHistory.slice(0, 9)];
-   }
-   await this.EditRepo.save(newEditHistoryComment)
-   comment.content = content
-   comment.updateCount++
-   const save = await this.commentBlogRepository.save(comment)
-   return save
+      if (comment.updateCount >= 3) {
+          await queryRunner.rollbackTransaction();
+          throw new ForbiddenException("YOU HAVE EXCEED THE MAXIMUM ALLOWED UPDATES FOR THIS COMMENT");
+      }
 
+      const newEditHistoryComment = new EditHistoryEntity();
+      newEditHistoryComment.editedBy = currentUser.name;
+      newEditHistoryComment.editedAt = new Date();
+      newEditHistoryComment.previousContent = comment.content;
+      newEditHistoryComment.newContent = content;
+
+      if(!comment.editHistory) {
+        comment.editHistory = [newEditHistoryComment]
+      }
+      else{
+          comment.editHistory = [newEditHistoryComment,...comment.editHistory.slice(0,9)]
+      }
+      await queryRunner.manager.save(EditHistoryEntity,newEditHistoryComment)
+      comment.content = content 
+      comment.updateCount++
+
+      const save = await queryRunner.manager.save(comment)
+      await queryRunner.commitTransaction()
+      return save
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error;
+    }
+    finally{
+      await queryRunner.release();
+    }
+  
 
   }
   
