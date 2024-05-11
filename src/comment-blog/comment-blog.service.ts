@@ -14,6 +14,8 @@ import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { query } from 'express';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class CommentBlogService {
@@ -23,23 +25,16 @@ export class CommentBlogService {
               private readonly userService:UserService ,
               private readonly blogService:BlogService,
               @Inject(CACHE_MANAGER) private cacheManager:Cache ,
-              private readonly connection:Connection
+              private readonly connection:Connection,
+              @InjectQueue('comment-blog') private readonly commentQueue:Queue
   ){}
 
   async createCommentBlog(createCommentBlogDto: CreateCommentBlogDto,blogId:number,userId:number) {
-    const user = await this.userService.findOne(userId)
-    console.log('user',user)
-    if(!user) throw new NotFoundException('USER NOT FOUND')
-    const blog = await this.blogService.findOne(blogId)
-    console.log('blog',blog)
-    if(!blog) throw new NotFoundException('BLOG NOT FOUND')
-    const newComment = await this.commentBlogRepository.create({
-    content:createCommentBlogDto.content,
-    user,
-    blog
+    const res =await this.commentQueue.add('createCommentBlog',{createCommentBlogDto,blogId,userId},{
+      removeOnFail : true,
+      removeOnComplete:true
     })
-    const saved = await this.commentBlogRepository.save(newComment)
-    return saved 
+    return res
   }
 
   async getComment(filterCommentBlogDto:filterCommentBlogDto):Promise<CommentEntity[]> {

@@ -14,16 +14,21 @@ import { CategoriesService } from 'src/categories/categories.service';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { QueueService } from 'src/blog/email-blog.service';
 import { EditHistoryEntity } from './entities/editHistoryComment-blog.entity';
+import { BullModule } from '@nestjs/bull';
+import { CommentWorker } from './comment.worker';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CommentEntity, BlogEntity, UserEntity,EditHistoryEntity]),
     BlogModule,
     UserModule ,
-    CategoriesModule
+    CategoriesModule,
+    BullModule.registerQueueAsync({
+      name:'comment-blog'
+    })
     
   ],
   controllers: [CommentBlogController],
-  providers: [CommentBlogService], 
+  providers: [CommentBlogService,CommentWorker], 
 })
 export class CommentBlogModule {}
