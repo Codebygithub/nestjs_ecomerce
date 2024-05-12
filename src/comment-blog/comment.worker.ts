@@ -7,7 +7,7 @@ import { EditHistoryEntity } from "./entities/editHistoryComment-blog.entity";
 import { CommentEntity } from "./entities/comment-blog.entity";
 import { UserService } from "src/user/user.service";
 import { BlogService } from "src/blog/blog.service";
-import { Repository } from "typeorm";
+import { Not, Repository } from "typeorm";
 
 @Processor('comment-blog')
 export class CommentWorker {
@@ -37,5 +37,24 @@ export class CommentWorker {
         const save = await this.commentBlogRepository.save(newComment)
         this.logger.log(`PROCESSSING HANDLE CREATE COMMENT WITH DATA ${job.data}`)
         return save
+    }
+    @Process('deleteCommentBlog')
+    async handleDeleteCommentBlog(job:Job){
+        const {commentId , currentUser } = job.data
+        const comment = await this.commentBlogRepository.findOne({
+            where:{id:commentId} ,
+            relations:{user:true , editHistory:true , blog:true}
+        })
+        if(!comment) throw new NotFoundException('COMMENT NOT FOUND')
+        
+        if (comment.editHistory && comment.editHistory.length > 0) {
+                for (const editHistory of comment.editHistory) {
+                  await this.EditRepo.delete(editHistory.id);
+                }
+              }
+        comment.user = currentUser
+        await this.commentBlogRepository.remove(comment)
+        this.logger.log('Deleted comment' + commentId)
+        
     }
 }

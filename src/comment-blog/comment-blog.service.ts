@@ -177,27 +177,9 @@ export class CommentBlogService {
 
   async deleteComment(commentId: number,currentUser:UserEntity): Promise<void> {
     // Tìm bình luận
-    const comment = await this.commentBlogRepository.findOne({
-      where:{id:commentId} ,
-      relations:{editHistory:true,user:true}
+    await this.commentQueue.add('deleteCommentBlog',{commentId,currentUser},{
+      removeOnComplete:true,
+      removeOnFail:true
     })
-    
-
-    if (!comment) {
-      throw new Error('Không tìm thấy bình luận');
-    }
-    console.log('comment edit' , comment.editHistory)
-    // Nếu có lịch sử chỉnh sửa, xóa chúng
-    if (comment.editHistory && comment.editHistory.length > 0) {
-      for (const editHistory of comment.editHistory) {
-        await this.EditRepo.delete(editHistory.id);
-      }
-    }
-
-    comment.user = currentUser
-    
-
-    // Xóa bình luận  
-    await this.commentBlogRepository.remove(comment);
   }
 }
