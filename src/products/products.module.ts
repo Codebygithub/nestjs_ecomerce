@@ -9,11 +9,19 @@ import { UserModule } from 'src/user/user.module';
 import { OrderModule } from 'src/order/order.module';
 import { RateLimitService } from 'src/utility/service/rate-limit.service';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { BullModule } from '@nestjs/bull';
 
 
 @Module({
   imports:[TypeOrmModule.forFeature([ProductEntity , CategoryEntity]),CategoriesModule , UserModule,
   forwardRef(()=>OrderModule),
+  BullModule.registerQueue({
+    name:'product',
+    redis:{ 
+      host:'localhost',
+      port:6379
+    }
+  })
   
 ],
   

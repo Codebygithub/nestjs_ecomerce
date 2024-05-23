@@ -28,7 +28,7 @@ export class ProductsController {
   @Throttle({default:{ttl:10000,limit:5}})
   @AuthorizeRoles(Roles.ADMIN)
   @UseGuards(AuthenticationGuard,AuthorizeGuard)
-  async create(@Body() createProductDto: CreateProductDto,@CurrentUser() currentUser:UserEntity):Promise<ProductEntity> {
+  async create(@Body() createProductDto: CreateProductDto,@CurrentUser() currentUser:UserEntity) {
     return await this.productsService.create(createProductDto,currentUser)
   }
 

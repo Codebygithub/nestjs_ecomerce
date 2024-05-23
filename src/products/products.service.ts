@@ -16,6 +16,8 @@ import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { min } from 'class-validator';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ProductsService {
@@ -24,6 +26,7 @@ export class ProductsService {
   private readonly userService:UserService,
   @InjectRepository(CategoryEntity) private readonly categoriesRepository:Repository<CategoryEntity>,
   @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService,
+  @Inject(CACHE_MANAGER) private cacheManager:Cache
   ){}
   async create(createProductDto: CreateProductDto,currentUser:UserEntity):Promise<ProductEntity> {
     const category = await this.categoryService.findOne(createProductDto.categoryId)
@@ -31,57 +34,71 @@ export class ProductsService {
     const product = this.productRepository.create(createProductDto)
     product.category = category
     product.addedBy = currentUser
-    return await this.productRepository.save(product)
+    const save =  await this.productRepository.save(product)
+    await this.invaliddateCache()
+    return save
   }
 
-
+  private async invaliddateCache() {
+    const keys:string[] = await this.cacheManager.store.keys();
+    for(const key of keys) {
+      await this.cacheManager.del(key)
+    }
+  }
   async findAll(query:FilterProductDto):Promise<any> {
-    const items_per_page = Number(query.item_per_page) || 10;
-    const page = Number(query.page) || 1;
-    const skip = (page - 1) * items_per_page;
-    const keyword = query.search || '';
-    const minPrice = Number(query.minPrice) || 0;
-    const maxPrice = Number(query.maxPrice) || Number.MAX_SAFE_INTEGER
-    const minRating = Number(query.minRating) || 0;
-    const maxRating = Number(query.maxRating) || 5; // Assuming maximum rating is 5
-
-    const whereConditions:any = {
-      title:Like(`%${keyword}%`),
-      price:Between(minPrice,maxPrice)
-
-    }
-
-    if(query.category) {
-      whereConditions.category = query.category
-    }
-  if(minRating !==0 || maxRating!==0 )
-  {
-    whereConditions.reviews = {
-      rating:Between(minRating,maxRating)
-    }
-  }
-
-
-    const [res,total] = await this.productRepository.findAndCount({
-      where:whereConditions,
-      take:items_per_page,
-      skip,
-      order:{createdAt:'DESC'},
-      select: ['id', 'price', 'stock', 'title', 'reviews', 'category', 'createdAt', 'updatedAt']
-    })
-
-    const lastPage = Math.ceil(total/items_per_page)
-    const nextPage = page + 1  > lastPage ? null : page + 1 
-    const prevPage = page - 1 < 1 ? null : page - 1;
-    return {
-       data:res,
-      total,
-      currenPage: page,
-      nextPage,
-      prevPage,
-      lastPage
-  }
-    
+   const cacheKey = JSON.stringify({
+    search:query.search,
+    minPrice:query.minPrice,
+    maxPrice:query.maxPrice,
+    category:query.category
+   })
+   const cacheResult = await this.cacheManager.get(cacheKey)
+   if (cacheResult) {
+    await this.cacheManager.del(cacheKey)
+    return JSON.parse(cacheResult as string)
+   }
+   else {
+    const itemsPerPage = Number(query.item_per_page) || 10;
+      const page = Number(query.page) || 1;
+      const skip = (page - 1) * itemsPerPage;
+      const keyword = query.search || '';
+      const minPrice = Number(query.minPrice) || 0;
+      const maxPrice = Number(query.maxPrice) || Number.MAX_SAFE_INTEGER;
+      const minRating = Number(query.minRating) || 0;
+      const maxRating = Number(query.maxRating) || 5;
+      const whereConditions:any = {
+        title:Like(`%${keyword}%`),
+        price:Between(minPrice,maxPrice)
+      };
+      if(query.category) {
+        whereConditions.category = query.category
+      }
+      if(minRating !== 0 || maxRating !==0 ) {
+        whereConditions.reviews = {
+          rating:Between(minRating,maxRating)
+        }
+      }
+      const [res, total] = await this.productRepository.findAndCount({
+        where: whereConditions,
+        take: itemsPerPage,
+        skip,
+        order: { createdAt: 'DESC' },
+        select: ['id', 'price', 'stock', 'title', 'reviews', 'category', 'createdAt', 'updatedAt'],
+      });
+      const lastPage = Math.ceil(total / itemsPerPage);
+      const nextPage = page + 1 > lastPage ? null : page + 1;
+      const prevPage = page - 1 < 1 ? null : page - 1;
+      const result = {
+        data: res,
+        total,
+        currentPage: page,
+        nextPage,
+        prevPage,
+        lastPage,
+      };
+      await this.cacheManager.set(cacheKey ,JSON.stringify(result),3600)
+      return result;
+   }
   }
 
   async increaseViewCount(productId:number,currentUser:UserEntity):Promise<ProductEntity>{ 
