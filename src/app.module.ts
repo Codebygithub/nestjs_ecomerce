@@ -18,7 +18,7 @@ import { EmailModule } from './email/email.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
-import * as redisStore from 'cache-manager-redis-store';
+import methods, * as redisStore from 'cache-manager-redis-store';
 import { CategoriesModule } from './categories/categories.module';
 import { ContactModule } from './contact/contact.module'; 
 import { BlogModule } from './blog/blog.module';
@@ -26,6 +26,7 @@ import { CommentBlogModule } from './comment-blog/comment-blog.module';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { UserLoggedListener } from './user/ultils/userLoggedIn.listener';
+import { checkLoginMiddware } from './utility/middleware/check-loggin.middware';
 
 
 @Module({
@@ -91,6 +92,9 @@ export class AppModule {
     consumer
       .apply(CurrentUserMiddleware)
       .forRoutes({path:'*',method:RequestMethod.ALL});
+    consumer
+    .apply(checkLoginMiddware)
+    .forRoutes({path:'api/v1/user/signin',method:RequestMethod.POST})
   }
 
 }
