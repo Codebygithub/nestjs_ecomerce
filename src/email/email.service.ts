@@ -1,6 +1,7 @@
 // email.service.ts
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { from } from 'rxjs';
 import { CreateBlogDto } from 'src/blog/dto/create-blog.dto';
 
 @Injectable()
@@ -9,7 +10,6 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      // Thay đổi cấu hình dưới đây tùy theo nhà cung cấp email của bạn
       service:'gmail',
       port:456,
       secure:true,
@@ -57,5 +57,22 @@ export class EmailService {
       console.error(`Error sending confirmation email to ${email}: ${error.message}`);
     }
   }
+  async sendEmailNotification(email:string , subject:string,text:string) {
+    let options={
+      from :process.env.EMAIL_FROM,
+      to:email ,
+      subject,
+      text
+    }
+    try {
+      await this.transporter.sendMail(options)
+      console.log(`Email Notification sent to ${email}`);
+
+    } catch (error) {
+      console.error('Error sending notification email to' +email)
+    }
+  }
+   
+  
   
 }

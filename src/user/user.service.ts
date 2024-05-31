@@ -20,6 +20,8 @@ import * as nodemailer from 'nodemailer';
 import { EmailService } from 'src/email/email.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UserLoggedInEvent } from './ultils/userLoggedIn.event';
 
 
 
@@ -27,6 +29,7 @@ import { Queue } from 'bull';
 export class UserService {
   constructor(@InjectRepository(UserEntity) private userRepository:Repository<UserEntity>,
               private readonly emailService:EmailService,
+              private readonly eventEmiiter:EventEmitter2
               
   
   ){}
@@ -91,6 +94,8 @@ export class UserService {
     if(!matchPassword) throw new BadRequestException('wrong password')
     userExist.isActive = true;
     delete userExist.password
+    const loginEvent = new UserLoggedInEvent(userExist.id , new Date())
+    this.eventEmiiter.emit('user.loggedin',loginEvent)
     return userExist
   }
   async findUserEmail(email:string):Promise<UserEntity>{
