@@ -27,7 +27,7 @@ export class UserLoggedListener {
             console.log("Successfully sent login notification to ",user.email);
             
         } catch (error) {
-            console.error('Error sending lpgij notification email:',error)
+            console.error('Error sending login notification email:',error)
         }
        
       }

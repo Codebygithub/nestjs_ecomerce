@@ -72,6 +72,24 @@ export class EmailService {
       console.error('Error sending notification email to' +email)
     }
   }
+
+  async sendNotificationComment(email:string , subject:string,text:string){
+    let options={
+      from :process.env.EMAIL_FROM,
+      to:email ,
+      subject,
+      text
+    }
+    try {
+      await this.transporter.sendMail(options)
+      console.log(`Email Notification sent to ${email}`);
+
+    } catch (error) {
+      console.error('Error sending notification email to' +email)
+  
+
+  }
+}
    
   
   

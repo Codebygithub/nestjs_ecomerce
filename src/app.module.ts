@@ -57,6 +57,9 @@ import { checkLoginMiddware } from './utility/middleware/check-loggin.middware';
       
       
     }),
+    ElasticsearchModule.register({
+      node:'http://localhost:9200'
+    }),
     CartModule,
     DiscountsModule,
     FavoriteModule,
