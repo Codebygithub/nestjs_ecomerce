@@ -8,13 +8,17 @@ import { CommentEntity } from "./entities/comment-blog.entity";
 import { UserService } from "src/user/user.service";
 import { BlogService } from "src/blog/blog.service";
 import { Not, Repository } from "typeorm";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { commentEvent } from "./comment.event";
 
 @Processor('comment-blog')
 export class CommentWorker {
     constructor( @InjectRepository(CommentEntity) private readonly commentBlogRepository:Repository<CommentEntity>,
     @InjectRepository(EditHistoryEntity) private readonly EditRepo:Repository<EditHistoryEntity>,
     private readonly userService:UserService ,
-    private readonly blogService:BlogService,){}
+    private readonly blogService:BlogService,
+    private readonly eventEmitter:EventEmitter2
+){}
 
     private readonly logger = new Logger(CommentWorker.name)
     @Process('createCommentBlog')
@@ -36,6 +40,8 @@ export class CommentWorker {
         })
         const save = await this.commentBlogRepository.save(newComment)
         this.logger.log(`PROCESSSING HANDLE CREATE COMMENT WITH DATA ${job.data}`)
+        const commentEventUser = new commentEvent(user.id , new Date())
+        this.eventEmitter.emit('user.comment' ,commentEventUser)
         return save
     }
     @Process('deleteCommentBlog')

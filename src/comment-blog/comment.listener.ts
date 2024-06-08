@@ -17,7 +17,7 @@ export class commentListener {
     const {userId , commentTime} = event
     const user = await this.userService.findOne(userId)
     const subject = 'COMMENT NOTIFICATION'
-    const text = `Hello ${user.name},\n\nYou have successfully logged in at ${commentTime}.`;
+    const text = `Hello ${user.name},\n\nYou have successfully commented at ${commentTime}.`;
 
     try {
         await this.emailService.sendNotificationComment(user.email,subject,text)
