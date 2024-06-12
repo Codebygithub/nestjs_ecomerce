@@ -36,6 +36,7 @@ export class UserService {
   async validate(details:UserDetail){
     const user = await this.userRepository.findOneBy({email:details.email})
     if(user ) return user
+    if(!user) throw new NotFoundException('USER NOT FOUND')
     const newUser = this.userRepository.create(details)
     return await this.userRepository.save(newUser)
   }
@@ -44,8 +45,8 @@ export class UserService {
     return user ; 
   }
   async createUserByAdmin(createUserDto:createUserDto):Promise<UserEntity>{
-    const hashPassword = bcrypt.hash(createUserDto.password,10)
-    const res = await this.userRepository.save({...createUserDto , password :await hashPassword})
+    const hashPassword = await bcrypt.hash(createUserDto.password,10)
+    const res = await this.userRepository.save({...createUserDto , password : hashPassword})
     return res
   }
   async logOut(res:Response):Promise<void>{

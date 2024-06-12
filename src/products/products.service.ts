@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductEntity } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, Connection, LessThanOrEqual, Like, MoreThanOrEqual, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { FilterProductDto } from './dto/filter-product.dto';
@@ -18,6 +18,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { query } from 'express';
 
 @Injectable()
 export class ProductsService {
@@ -26,7 +27,9 @@ export class ProductsService {
   private readonly userService:UserService,
   @InjectRepository(CategoryEntity) private readonly categoriesRepository:Repository<CategoryEntity>,
   @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService,
-  @Inject(CACHE_MANAGER) private cacheManager:Cache
+  @Inject(CACHE_MANAGER) private cacheManager:Cache,
+  private readonly connection:Connection,
+
   ){}
   async create(createProductDto: CreateProductDto,currentUser:UserEntity):Promise<ProductEntity> {
     const category = await this.categoryService.findOne(createProductDto.categoryId)
@@ -140,6 +143,11 @@ export class ProductsService {
     return totalRating / reviews.length;
   }
   async findOne(id: number):Promise<ProductEntity> {
+    const cacheKey = `product_${id}`;
+    const cachedProduct = await this.cacheManager.get(cacheKey);
+  if (cachedProduct) {
+    return JSON.parse(cachedProduct as string)
+  }
     const product = await this.productRepository.findOne({
       where:{id},
       relations:{addedBy:true , category:true,},
@@ -158,6 +166,7 @@ export class ProductsService {
       }
     })
     if(!product) throw new BadRequestException()
+    await this.cacheManager.set(cacheKey,product,3600)
     return product
   
     
@@ -196,15 +205,34 @@ export class ProductsService {
 
   async updateStock(id:number , stock:number , status:string)
   {
-    let product = await this.findOne(id)
-    if(status === OrderStatus.DELIVERED)
-    {
-      product.stock-=stock
-    }else{
-      product.stock +=stock
+    const queryRunner = this.connection.createQueryRunner()
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
+    try {
+      if(typeof stock !=='number' || stock <=0) {
+        throw new BadRequestException('stock must be postitive integer')
+      }
+      if(status !== OrderStatus.PROCESSING && status !== OrderStatus.SHIPPED && status !== OrderStatus.DELIVERED && status !== OrderStatus.CENCELLED) {
+        throw new BadRequestException('Invalid order status');
+      }
+      let product = await this.findOne(id)
+      if(status === OrderStatus.DELIVERED)
+      {
+        product.stock-=stock
+      }else{
+        product.stock +=stock
+      }
+      product = await queryRunner.manager.save(product)
+      await queryRunner.commitTransaction()
+      return product;
+    } catch (error) {
+      await queryRunner.rollbackTransaction()
+      throw error
     }
-    product = await this.productRepository.save(product)
-    return product;
+    finally {
+      await queryRunner.release();
+    }
+   
   }
 
   async suggestCategoriesBySales(n:number): Promise<CategoryEntity[]> {
