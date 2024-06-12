@@ -61,11 +61,11 @@ export class ProductsService {
     const itemsPerPage = Number(query.item_per_page) || 10;
       const page = Number(query.page) || 1;
       const skip = (page - 1) * itemsPerPage;
-      const keyword = query.search || '';
-      const minPrice = Number(query.minPrice) || 0;
-      const maxPrice = Number(query.maxPrice) || Number.MAX_SAFE_INTEGER;
-      const minRating = Number(query.minRating) || 0;
-      const maxRating = Number(query.maxRating) || 5;
+      const keyword = query.search ? query.search.replace(/[^\w\s]/gi, '') : '';
+      const minPrice = Number(query.minPrice) ? Number(query.minPrice) : 0;
+      const maxPrice = Number(query.maxPrice) ? Number(query.maxPrice) : Number.MAX_SAFE_INTEGER;
+      const minRating = Number(query.minRating) ? Number(query.minRating) : 0;
+      const maxRating = Number(query.maxRating) ? Number(query.maxRating) : 5;
       const whereConditions:any = {
         title:Like(`%${keyword}%`),
         price:Between(minPrice,maxPrice)
