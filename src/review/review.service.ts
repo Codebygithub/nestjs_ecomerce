@@ -4,7 +4,7 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ReviewEntity } from './entities/review.entity';
-import { Repository } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 import { ProductsService } from 'src/products/products.service';
 import { UserService } from 'src/user/user.service';
 
@@ -13,7 +13,9 @@ import { UserService } from 'src/user/user.service';
 export class ReviewService {
   constructor(@InjectRepository(ReviewEntity) private readonly reviewRepository:Repository<ReviewEntity>,
   private readonly productService:ProductsService,
-  private readonly userService:UserService){}
+  private readonly userService:UserService,
+  private readonly connection:Connection
+){}
   async create(createReviewDto: CreateReviewDto,CurrentUser:UserEntity): Promise<ReviewEntity> {
     let product = await this.productService.findOne(createReviewDto.productId)
     let review = await this.findUserAndProduct(CurrentUser.id,createReviewDto.productId)
@@ -116,6 +118,21 @@ export class ReviewService {
   }
 
   async remove(review:ReviewEntity): Promise<ReviewEntity> {
-    return this.reviewRepository.remove(review);
+    const reviewExisting = await this.findOne(review.id)
+    if(!reviewExisting) throw new NotFoundException('REVIEW NOT FOUND')
+    const queryRunner = this.connection.createQueryRunner() ;
+    await queryRunner.connect()
+    await queryRunner.startTransaction()
+    try {
+      await queryRunner.manager.remove(review)
+      await queryRunner.commitTransaction()
+    } catch (error) {
+      await queryRunner.rollbackTransaction() 
+      throw error
+    }
+    finally{
+      await queryRunner.release()
+    }
+    return review
   }
 }
