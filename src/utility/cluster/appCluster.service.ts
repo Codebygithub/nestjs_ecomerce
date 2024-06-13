@@ -13,7 +13,7 @@ export class AppClusterService {
     static clusterize(callback: ()=> void):void {
       if(cluster.isPrimary) {
 
-        const totalWoker = numberCPUs * cluster.worker
+        const totalWoker = numberCPUs * 2
         
         console.log(
             `\x1b[36m ==> PORT:3000- PRIMARY [${process.pid}] <==\x1b[0m`,

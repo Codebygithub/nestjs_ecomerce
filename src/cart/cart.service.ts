@@ -90,6 +90,7 @@ private getCartTotal(cartItems:CartEntity[]){
 
   async deleteCartInItem(id:number,currentUser:UserEntity): Promise<CartEntity>
   {
+    if(!currentUser) throw new NotFoundException('Current User is missing')
     const cart = await this.cartRepository.findOne({
       where:{id}
     })
