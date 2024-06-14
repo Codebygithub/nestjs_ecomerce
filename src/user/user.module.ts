@@ -12,7 +12,6 @@
   import { BullModule, BullQueueEvents } from '@nestjs/bull';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { UserWorker } from './user.worker';
-import { ProfileModule } from './profile/profile.module';
 
 
 
@@ -27,8 +26,6 @@ import { ProfileModule } from './profile/profile.module';
     BullModule.registerQueueAsync({
       name:'user'
     }),
-    ,
-    ProfileModule, 
   ],
     controllers: [UserController],
     providers: [UserService,{

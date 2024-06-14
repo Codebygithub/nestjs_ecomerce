@@ -146,8 +146,14 @@ export class UserService {
     if(!user) throw new NotFoundException('user not found')
     return user
   }
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.findOne(id)
+    if(!user) throw new NotFoundException('user not found')
+    const updatedUser = Object.assign(user,updateUserDto)
+    if(updateUserDto.password) updatedUser.password = await this.generateHash(updateUserDto.password)
+    if(updateUserDto.avatar) updatedUser.avatar = updateUserDto.avatar
+    await this.emailService.sendUpdateEmail(user.email)
+    return await this.userRepository.save(updatedUser)
   }
   remove(id: number) {
     return `This action removes a #${id} user`;

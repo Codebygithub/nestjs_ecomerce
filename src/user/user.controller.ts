@@ -19,14 +19,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'src/utility/helper/configAvatar';
 import { extname } from 'path';
 import { get } from 'http';
-import { ProfileService } from './profile/profile.service';
 
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService, 
 
-              private readonly profileService:ProfileService
   ) {}
 
   @Get('google/login')
@@ -87,9 +85,8 @@ export class UserController {
   }
   @Patch(':id/profile')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-   const res = await this.profileService.updateUser(+id,updateUserDto)
-
-   return res
+    const res = await this.userService.update(+id, updateUserDto);
+    return res
   }
   @Delete(':id')
   remove(@Param('id') id: string) {
