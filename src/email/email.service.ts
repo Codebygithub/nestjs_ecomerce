@@ -42,6 +42,17 @@ export class EmailService {
       console.error(`Error sending confirmation email to ${email}: ${error.message}`);
     }
   }
+  async sendUpdateEmail(email: string): Promise<void> {
+    const mailOptions = {
+    from: process.env.EMAIL_FROM, // Địa chỉ email gửi,
+    toString: email,
+    subject: 'Email Update', // Tiêu đề email
+    text: 'Your email has been updated.', // Nội dung email
+    html: `<p>Your email has been updated.</p>`,
+    }
+    await this.transporter.sendMail(mailOptions);
+}
+  
   async sendEmailBlog(email: string,createBlogDto:CreateBlogDto): Promise<void> {
     const mailOptions = {
       from: process.env.EMAIL_FROM, // Địa chỉ email gửi
