@@ -8,6 +8,7 @@ import { DiscountUserEntity } from "src/discounts/entities/discount-user.entity"
 import { DiscountEntity } from "src/discounts/entities/discount.entity";
 import { SavedDiscountEntity } from "src/discounts/entities/save-discount.entity";
 import { FavoriteEntity } from "src/favorite/entities/favorite.entity";
+import { InventoryEntity } from "src/inventory/entities/inventory.entity";
 import { OrderEntity } from "src/order/entities/order.entity";
 import { ProductEntity } from "src/products/entities/product.entity";
 import { ReviewEntity } from "src/review/entities/review.entity";
@@ -35,10 +36,8 @@ export class UserEntity {
 
     @Column({nullable:false , default:false})
     isActive: boolean ;
-
     @Column({nullable:true,default:''})
     introduction:string
-
     @CreateDateColumn()
     createdAt:Timestamp;
     @UpdateDateColumn()
@@ -87,6 +86,11 @@ export class UserEntity {
   
     @OneToMany(()=>CommentEntity , (cmt) => cmt.user)
     comments: CommentEntity[]
+
+    @OneToMany(() => InventoryEntity, inventory => inventory.user)
+    inventories: InventoryEntity[];
+
+    
     
 
 }

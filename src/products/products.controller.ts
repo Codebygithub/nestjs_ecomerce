@@ -56,6 +56,17 @@ export class ProductsController {
     const res = await this.productsService.findAll(FilterProductDto);
     return res
   }
+  @Patch(':id/published')
+  async publishedProduct(@Param('id') id: string): Promise<ProductEntity> {
+    const res = await this.productsService.publishedProduct(+id)
+    return res
+  } 
+
+  @Patch(':id/draft')
+  async draftProduct(@Param('id') id: string): Promise<ProductEntity> {
+    const res = await this.productsService.draftProduct(+id)
+    return res
+  } 
 
   @Get(':id')
   @UseInterceptors(CacheInterceptor)

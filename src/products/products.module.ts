@@ -10,10 +10,12 @@ import { OrderModule } from 'src/order/order.module';
 import { RateLimitService } from 'src/utility/service/rate-limit.service';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { BullModule } from '@nestjs/bull';
+import { InventoryModule } from 'src/inventory/inventory.module';
+import { InventoryEntity } from 'src/inventory/entities/inventory.entity';
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([ProductEntity , CategoryEntity]),CategoriesModule , UserModule,
+  imports:[TypeOrmModule.forFeature([ProductEntity , CategoryEntity , InventoryEntity]),CategoriesModule , UserModule,InventoryModule,
   forwardRef(()=>OrderModule),
   BullModule.registerQueue({
     name:'product',

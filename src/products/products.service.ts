@@ -19,6 +19,7 @@ import { Queue } from 'bull';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { query } from 'express';
+import { InventoryEntity } from 'src/inventory/entities/inventory.entity';
 
 @Injectable()
 export class ProductsService {
@@ -26,6 +27,7 @@ export class ProductsService {
   private readonly categoryService:CategoriesService,
   private readonly userService:UserService,
   @InjectRepository(CategoryEntity) private readonly categoriesRepository:Repository<CategoryEntity>,
+  @InjectRepository(InventoryEntity) private readonly inventoriesRepository:Repository<InventoryEntity>,
   @Inject(forwardRef(()=>OrderService)) private readonly orderService:OrderService,
   @Inject(CACHE_MANAGER) private cacheManager:Cache,
   private readonly connection:Connection,
@@ -33,13 +35,42 @@ export class ProductsService {
   ){}
   async create(createProductDto: CreateProductDto,currentUser:UserEntity):Promise<ProductEntity> {
     const category = await this.categoryService.findOne(createProductDto.categoryId)
-    if(!category)  throw new NotFoundException('Category not found');
+    if(!category) throw new NotFoundException('Category went wrong')
     const product = this.productRepository.create(createProductDto)
     product.category = category
     product.addedBy = currentUser
-    const save =  await this.productRepository.save(product)
+    const saveProduct = await this.productRepository.save(product)
+    const existingInventory = await this.inventoriesRepository.findOne({where:{id:createProductDto.inventoryId}})
+    if(existingInventory) {
+      existingInventory.stock += createProductDto.stock || 0 
+      await this.inventoriesRepository.save(existingInventory)
+    }else {
+      const newInventory = this.inventoriesRepository.create({
+        user:currentUser,
+        stock:createProductDto.stock,
+        location:'unknown',
+        reservations:[],
+      })
+      await this.inventoriesRepository.save(newInventory)
+      
+    }
     await this.invaliddateCache()
-    return save
+    return saveProduct;    
+  }
+  async publishedProduct(productId:number) {
+    const product = await this.productRepository.findOne({where:{id:productId}})
+    if(!product) throw new NotFoundException(`Product ${productId} not found`)
+    product.isDraft = false 
+    product.isPublished = true;
+    return this.productRepository.save(product)
+  }
+  async draftProduct(productId:number) {
+    const product = await this.productRepository.findOne({where:{id:productId}})
+    if(!product) throw new NotFoundException(`Product ${productId} not found`)
+    product.isDraft = true 
+    product.isPublished = false;
+    return this.productRepository.save(product)
+
   }
 
   private async invaliddateCache() {

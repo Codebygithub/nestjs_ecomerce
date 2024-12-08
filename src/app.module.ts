@@ -27,6 +27,12 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { UserLoggedListener } from './user/ultils/userLoggedIn.listener';
 import { checkLoginMiddware } from './utility/middleware/check-loggin.middware';
+// import { checkApiKeyMiddleware } from './utility/middleware/check-apiKey.middleware';
+import { ApiKeyModule } from './api-key/api-key.module';
+import { checkApiKeyMiddleware } from './utility/middleware/check-apiKey.middleware';
+import { InventoryModule } from './inventory/inventory.module';
+
+
 
 
 @Module({
@@ -71,7 +77,9 @@ import { checkLoginMiddware } from './utility/middleware/check-loggin.middware';
     }),
     ContactModule,
     BlogModule,
-    CommentBlogModule,
+    CommentBlogModule, ApiKeyModule, InventoryModule
+    
+    
    
   
   ],
@@ -98,6 +106,8 @@ export class AppModule {
     consumer
     .apply(checkLoginMiddware)
     .forRoutes({path:'api/v1/user/signin',method:RequestMethod.POST})
+    consumer.apply(checkApiKeyMiddleware)
+    .forRoutes('*')
   }
 
 }

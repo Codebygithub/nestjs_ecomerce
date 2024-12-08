@@ -3,10 +3,11 @@
 import { CartEntity } from 'src/cart/entities/cart.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { DiscountEntity } from 'src/discounts/entities/discount.entity';
+import { InventoryEntity } from 'src/inventory/entities/inventory.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
 import { ReviewEntity } from 'src/review/entities/review.entity';
 import { UserEntity } from 'src/user/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, UpdateDateColumn, Timestamp, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, UpdateDateColumn, Timestamp, CreateDateColumn, OneToMany, ManyToMany } from 'typeorm';
 
 @Entity()
 export class ProductEntity {
@@ -31,6 +32,12 @@ export class ProductEntity {
   @Column({nullable:true,default:0})
   view:number
 
+  @Column({default:true})
+  isDraft:boolean
+
+  @Column({default:false})
+  isPublished:boolean
+  
   @Column({default: 0 })
   saled:number
   
@@ -57,6 +64,10 @@ export class ProductEntity {
 
   @OneToMany(() => DiscountEntity, discount => discount.product)
   discounts: DiscountEntity[];
+
+  @ManyToMany(() => InventoryEntity, inventory => inventory.products)
+  inventories: InventoryEntity[];
+
 
 
 

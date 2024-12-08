@@ -22,10 +22,11 @@ import { CartWorker } from './cart.worker';
 import  *  as redisStore from "cache-manager-redis-store";
 import { config } from 'dotenv';
 import { Redis } from 'ioredis';
+import { InventoryModule } from 'src/inventory/inventory.module';
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([CartEntity , ProductEntity , UserEntity,CategoryEntity,OrderEntity,OrderProductsEntity]),
+  imports:[TypeOrmModule.forFeature([CartEntity , ProductEntity , UserEntity,CategoryEntity,OrderEntity,OrderProductsEntity]), InventoryModule,
     BullModule.registerQueueAsync({
       name:'cart'
     })

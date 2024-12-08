@@ -25,4 +25,7 @@ export class CreateProductDto {
     @IsNotEmpty()
     @IsNumber()
     categoryId:number
+    
+    
+    inventoryId:string
 }
