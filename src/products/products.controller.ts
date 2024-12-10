@@ -57,14 +57,18 @@ export class ProductsController {
     return res
   }
   @Patch(':id/published')
-  async publishedProduct(@Param('id') id: string): Promise<ProductEntity> {
-    const res = await this.productsService.publishedProduct(+id)
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  async publishedProduct(@Param('id') id: string, @CurrentUser() currentUser:UserEntity):Promise<Pick<ProductEntity, "id" | "title" | "price" | "stock" | "isDraft" | "isPublished" | "saled">> {
+    const res = await this.productsService.publishedProduct(+id,currentUser)
     return res
   } 
 
   @Patch(':id/draft')
-  async draftProduct(@Param('id') id: string): Promise<ProductEntity> {
-    const res = await this.productsService.draftProduct(+id)
+  @AuthorizeRoles(Roles.ADMIN)
+  @UseGuards(AuthenticationGuard,AuthorizeGuard)
+  async draftProduct(@Param('id') id: string , @CurrentUser() currentUser:UserEntity): Promise<ProductEntity> {
+    const res = await this.productsService.draftProduct(+id , currentUser)
     return res
   } 
 
@@ -76,6 +80,26 @@ export class ProductsController {
   async findOne(@Param('id') id: string):Promise<ProductEntity> {
     return await this.productsService.findOne(+id);
   }
+
+  @Get('drafts')
+  async findAllDraftProduct(
+    @Query('limit') limit: string , // Mặc định là 10 nếu không truyền
+    @Query('skip') skip: string ,   // Mặc định là 0 nếu không truyền
+  ) {
+    const limitNumber = parseInt(limit, 10);
+    const skipNumber = parseInt(skip, 10);
+
+    console.log('limit' , limitNumber)
+    console.log('skip' , skipNumber)
+  
+    if (isNaN(limitNumber) || isNaN(skipNumber)) {
+      throw new BadRequestException('Limit and skip must be valid numbers.');
+    }
+  
+    return await this.productsService.findAllDraftProduct(limitNumber, skipNumber);
+  }
+  
+
 
   @Patch(':id')
   @Throttle({default:{ttl:10000,limit:5}})

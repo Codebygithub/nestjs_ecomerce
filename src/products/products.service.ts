@@ -20,6 +20,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { query } from 'express';
 import { InventoryEntity } from 'src/inventory/entities/inventory.entity';
+import {pick} from 'lodash'
 
 @Injectable()
 export class ProductsService {
@@ -57,21 +58,36 @@ export class ProductsService {
     await this.invaliddateCache()
     return saveProduct;    
   }
-  async publishedProduct(productId:number) {
+
+  async findAllDraftProduct(limit: number, skip: number): Promise<ProductEntity[]> {
+    console.log('limit',limit)
+    console.log('skip' ,skip)
+    return await this.productRepository.find({
+      where: { isDraft: true },
+      order: { updatedAt: 'DESC' },
+      take: limit,
+      skip: skip,
+    });
+  }
+  
+  async publishedProduct(productId:number , currentUser:UserEntity):Promise<Pick<ProductEntity, "id" | "title" | "price" | "stock" | "isDraft" | "isPublished" | "saled">> {
     const product = await this.productRepository.findOne({where:{id:productId}})
     if(!product) throw new NotFoundException(`Product ${productId} not found`)
     product.isDraft = false 
     product.isPublished = true;
-    return this.productRepository.save(product)
+    const saveProduct = await this.productRepository.save(product)
+    return pick(saveProduct, ['id', 'title', 'price', 'stock', 'isDraft', 'isPublished', 'saled']);
+
   }
-  async draftProduct(productId:number) {
-    const product = await this.productRepository.findOne({where:{id:productId}})
+  async draftProduct(productId:number,currentUser:UserEntity) {
+    const product = await this.productRepository.findOne({where:{id:productId }})
     if(!product) throw new NotFoundException(`Product ${productId} not found`)
     product.isDraft = true 
     product.isPublished = false;
     return this.productRepository.save(product)
 
   }
+  
 
   private async invaliddateCache() {
     const keys:string[] = await this.cacheManager.store.keys();
@@ -92,7 +108,7 @@ export class ProductsService {
     return JSON.parse(cacheResult as string)
    }
    else {
-    const itemsPerPage = Number(query.item_per_page) || 10;
+      const itemsPerPage = Number(query.item_per_page) || 10;
       const page = Number(query.page) || 1;
       const skip = (page - 1) * itemsPerPage;
       const keyword = query.search ? query.search.replace(/[^\w\s]/gi, '') : '';

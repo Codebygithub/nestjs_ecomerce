@@ -2,6 +2,7 @@
 
 import { CartEntity } from 'src/cart/entities/cart.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import {CommentEntity } from 'src/comment/entities/comment.entity';
 import { DiscountEntity } from 'src/discounts/entities/discount.entity';
 import { InventoryEntity } from 'src/inventory/entities/inventory.entity';
 import { OrderProductsEntity } from 'src/order/entities/order-products.entity';
@@ -68,6 +69,8 @@ export class ProductEntity {
   @ManyToMany(() => InventoryEntity, inventory => inventory.products)
   inventories: InventoryEntity[];
 
+  @OneToMany(()=>CommentEntity , (conmment) => conmment.product)
+  comments: CommentEntity[];
 
 
 

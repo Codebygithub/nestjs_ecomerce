@@ -2,7 +2,7 @@ import { BlogEntity } from "src/blog/entities/blog.entity";
 import { CartEntity } from "src/cart/entities/cart.entity";
 import { CategoryEntity } from "src/categories/entities/category.entity";
 import { ChatEntity } from "src/chat/entities/chat.entity";
-import { CommentEntity } from "src/comment-blog/entities/comment-blog.entity";
+import { CommentEntity } from "src/comment/entities/comment.entity";
 import { ContactEntity } from "src/contact/entities/contact.entity";
 import { DiscountUserEntity } from "src/discounts/entities/discount-user.entity";
 import { DiscountEntity } from "src/discounts/entities/discount.entity";
@@ -83,9 +83,10 @@ export class UserEntity {
     @OneToMany(()=> BlogEntity , (blog) => blog.user)
     blog:BlogEntity[]
 
+    @OneToMany(() => CommentEntity , (comment)=> comment.user)
+    comments:CommentEntity[]
   
-    @OneToMany(()=>CommentEntity , (cmt) => cmt.user)
-    comments: CommentEntity[]
+
 
     @OneToMany(() => InventoryEntity, inventory => inventory.user)
     inventories: InventoryEntity[];

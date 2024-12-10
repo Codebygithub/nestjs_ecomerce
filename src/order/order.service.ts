@@ -28,6 +28,12 @@ export class OrderService {
     orderEntity.shippingAddress = shippingEntity
     orderEntity.user = currentUser
     const orderTbI = await this.orderRepository.save(orderEntity)
+    type OrderProductEntityData = {
+      order: OrderEntity;
+      product: ProductEntity;
+      product_quantity: number;
+      product_unit_price: number;
+    };
 
     let opEntity: {
       order:OrderEntity,
@@ -44,7 +50,7 @@ export class OrderService {
       const product_unit_price = createOrderDto.orderedProducts[i].product_unit_price
       opEntity.push({order,product,product_quantity,product_unit_price})
     }
-    const op = await this.orderRepository.createQueryBuilder().insert().into(OrderProductsEntity).values(opEntity).execute()
+    // const op = await this.orderRepository.createQueryBuilder().insert().into(OrderProductsEntity).values(opEntity).execute()
 
 
     return await this.findOne(orderTbI.id)
