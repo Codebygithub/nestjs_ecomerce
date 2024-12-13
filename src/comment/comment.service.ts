@@ -56,7 +56,7 @@ export class CommentService {
     const { productId , commentId} = filterCommentDto
     const product = await this.productRepository.findOne({where:{id:+productId}})
     const comment = await this.commentRepository.findOne({where:{id:+commentId}})
-    if(!product || comment)  throw new NotFoundException('Product or comment not found')
+    if(!product || !comment)  throw new NotFoundException('Product or comment not found')
     const leftValue = comment.left
     const rightValue = comment.right
     const width = rightValue - leftValue + 1 
@@ -64,20 +64,28 @@ export class CommentService {
       product: { id: +productId }, 
       left: Between(leftValue, rightValue), 
     });
-    await this.commentRepository.createQueryBuilder()
-      .update(CommentEntity)
-      .set({ right: () => `"right" - ${width}` }) // Sử dụng phép toán
-      .where('"productId" = :productId', { productId })
-      .andWhere('"right" > :rightValue', { rightValue })
-      .execute();
-
-    // 3. Cập nhật giá trị `left` cho các bản ghi có `left > rightValue`
-    await this.commentRepository.createQueryBuilder()
-      .update(CommentEntity)
-      .set({ left: () => `"left" - ${width}` }) // Sử dụng phép toán
-      .where('"productId" = :productId', { productId })
-      .andWhere('"left" > :rightValue', { rightValue })
-      .execute();
+    const commentsToUpdateRight = await this.commentRepository.find({
+      where:{
+        product:{id:+productId},
+        right:MoreThan(rightValue)
+      }
+    })
+    for(const comment of commentsToUpdateRight) {
+      comment.right -= width;
+      await this.commentRepository.save(comment)
+    }
+    const commentsToUpdateLeft= await this.commentRepository.find({
+      where:{
+        product:{id:+productId},
+        left:MoreThan(rightValue)
+      }
+    })
+    for(const comment of commentsToUpdateLeft) {
+      comment.left -= width;
+      await this.commentRepository.save(comment)
+    }
+    
+    
   }
 
   async getAllCommentById({productId , limit = 50 , offset = 0 , parentCommentId = null}: FilterCommentDto ) {
